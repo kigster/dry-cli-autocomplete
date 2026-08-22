@@ -2,8 +2,10 @@
 
 # This gem's files are lexically inside `module Dry`, so every unqualified
 # constant is resolved against that namespace first. A bare `Struct` therefore
-# means `Dry::Struct` in any host that has dry-struct loaded, and
-# `Dry::Struct.new` takes different arguments from `::Struct.new`.
+# meant `Dry::Struct` in any host that had dry-struct loaded, and
+# `Dry::Struct.new` takes different arguments from `::Struct.new`. The value
+# objects are `::Data` now, and the leading colons matter for the same reason:
+# no `Dry::Data` exists today, but one released gem would be enough.
 #
 # The failure cannot appear in this suite's normal runs, because dry-struct is
 # not in this gem's bundle. It appears in the host, at the moment somebody
@@ -24,13 +26,23 @@ RSpec.describe "loading inside a host that uses dry-struct" do
     [output, $CHILD_STATUS || $?]
   end
 
-  it "builds its value objects from ::Struct rather than Dry::Struct" do
+  it "loads at all, which is the thing that used to fail" do
     output, status = load_with_dry_struct(<<~RUBY)
-      print Dry::CLI::Autocomplete::SpecBuilder::CompletionSpec.superclass
+      print "loaded"
     RUBY
 
     expect(status).to be_success, "loading failed:\n#{output}"
-    expect(output).to eq("Struct")
+    expect(output).to eq("loaded")
+  end
+
+  it "builds its value objects from core Data, not anything in Dry" do
+    output, status = load_with_dry_struct(<<~RUBY)
+      klass = Dry::CLI::Autocomplete::SpecBuilder::CompletionSpec
+      print [klass.superclass, klass.name.start_with?("Dry::CLI::Autocomplete")].inspect
+    RUBY
+
+    expect(status).to be_success, "loading failed:\n#{output}"
+    expect(output).to eq("[Data, true]")
   end
 
   it "keeps every value object out of the Dry::Struct hierarchy" do

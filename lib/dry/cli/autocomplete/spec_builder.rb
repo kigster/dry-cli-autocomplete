@@ -11,22 +11,24 @@ module Dry
       # already holds, so it stays cheap enough to run on every shell start.
       # See SPECIFICATION.md §2.2 and §2.3.
       class SpecBuilder
-        # ::Struct, not Struct. This file is lexically inside `module Dry`, so
-        # a bare `Struct` resolves to `Dry::Struct` in any host that has
-        # dry-struct loaded, and `Dry::Struct.new` takes different arguments.
-        # The failure appears only in such a host, never in this gem's own
-        # suite, so it reads as "the gem is broken" from the outside.
-        CompletionSpec = ::Struct.new(:program_name, :nodes, keyword_init: true)
-        Node = ::Struct.new(:path, :desc, :options, :arguments, :children, keyword_init: true)
-
-        # :values shadows Struct#values by design: it is the field name the
-        # interface contract in .plans/001.00-*/plan.md fixes for emitters.
-        OptionSpec = ::Struct.new(
-          :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array,
-          keyword_init: true
+        # `::Data`, with the leading colons, and never a bare `Data`. This file
+        # is lexically inside `module Dry`, so an unqualified constant is looked
+        # up there first: a bare `Struct` here meant `Dry::Struct` in any host
+        # that had dry-struct loaded, which took different arguments and broke
+        # on the host's machine while this gem's own suite stayed green. No
+        # `Dry::Data` exists today, but the same trap is one released gem away,
+        # and dry_struct_host_spec.rb is what keeps watch.
+        #
+        # Data rather than Struct because these are descriptions, built once and
+        # rendered: frozen is what they should be, a missing field raises rather
+        # than arriving as a silent nil, and `:values` stops colliding with a
+        # method Struct defines and Data does not.
+        CompletionSpec = ::Data.define(:program_name, :nodes)
+        Node = ::Data.define(:path, :desc, :options, :arguments, :children)
+        OptionSpec = ::Data.define(
+          :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array
         )
-        ArgumentSpec = ::Struct.new(:name, :values, :desc, :required, :file, keyword_init: true)
-        # rubocop:enable Lint/StructNewOverride
+        ArgumentSpec = ::Data.define(:name, :values, :desc, :required, :file)
 
         # A bare heuristic, used only when a host does not declare `file:`
         # explicitly on the argument. See SPECIFICATION.md §4.3.
