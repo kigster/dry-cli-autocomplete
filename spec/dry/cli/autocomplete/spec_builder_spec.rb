@@ -70,23 +70,23 @@ RSpec.describe Dry::CLI::Autocomplete::SpecBuilder do
 
   describe "against SimpleCLI" do
     include_examples "a completion spec",
-                     registry: Fixtures::SimpleCLI,
-                     hidden_name: "secret",
-                     group_with_own_command: "db"
+      registry: Fixtures::SimpleCLI,
+      hidden_name: "secret",
+      group_with_own_command: "db"
   end
 
   describe "against PackageManagerCLI" do
     include_examples "a completion spec",
-                     registry: Fixtures::PackageManagerCLI,
-                     hidden_name: "publish",
-                     group_with_own_command: "config"
+      registry: Fixtures::PackageManagerCLI,
+      hidden_name: "publish",
+      group_with_own_command: "config"
   end
 
   describe "against HanamiLikeCLI (not written for this project)" do
     include_examples "a completion spec",
-                     registry: Fixtures::HanamiLikeCLI,
-                     hidden_name: "console",
-                     group_with_own_command: "db"
+      registry: Fixtures::HanamiLikeCLI,
+      hidden_name: "console",
+      group_with_own_command: "db"
   end
 
   describe "the walk example from plan.md §3" do

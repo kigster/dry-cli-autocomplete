@@ -16,7 +16,6 @@ module Dry
 
         # :values shadows Struct#values by design: it is the field name the
         # interface contract in .plans/001.00-*/plan.md fixes for emitters.
-        # rubocop:disable Lint/StructNewOverride
         OptionSpec = Struct.new(
           :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array,
           keyword_init: true

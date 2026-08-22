@@ -13,7 +13,6 @@ module ZshFixtures
 
   # :values shadows Struct#values by design, matching the field name
   # the interface contract fixes for emitters.
-  # rubocop:disable Lint/StructNewOverride
   OptionSpec = Struct.new(
     :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array,
     keyword_init: true
@@ -64,7 +63,7 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
           path: ["deploy"], desc: "Deploy the application", children: [],
           options: [ZshFixtures.option(name: "force", desc: "Skip confirmation", aliases: ["-f"], boolean: true)],
           arguments: [ZshFixtures.argument(name: "target", desc: "Target environment",
-                                           values: %w[staging production])]
+            values: %w[staging production])]
         ),
         ZshFixtures::Node.new(
           path: ["db"], desc: "Show pending migrations", arguments: [], children: %w[migrate],
@@ -149,6 +148,70 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
 
     it "produces a script zsh accepts" do
       accepted, stderr = zsh_accepts?(described_class.call(dashed_spec))
+      expect(accepted).to be(true), stderr
+    end
+  end
+
+  describe "a node with nothing to complete" do
+    # A leaf command that declares no options, no arguments and has no
+    # subcommands has nothing for _arguments or _describe to say. It must
+    # produce no case arm at all rather than an empty one, which is a zsh
+    # syntax error.
+    let(:bare_spec) do
+      ZshFixtures::CompletionSpec.new(
+        program_name: "mycli",
+        nodes: [
+          ZshFixtures::Node.new(path: [], desc: nil, options: [], arguments: [], children: %w[ping]),
+          ZshFixtures::Node.new(path: ["ping"], desc: "Ping the server", options: [], arguments: [], children: [])
+        ]
+      )
+    end
+
+    it "emits no case arm for it" do
+      expect(described_class.call(bare_spec)).not_to include("('ping')")
+    end
+
+    it "still lists it as a child of its parent" do
+      expect(described_class.call(bare_spec)).to include("'ping:Ping the server'")
+    end
+
+    it "produces a script zsh accepts" do
+      accepted, stderr = zsh_accepts?(described_class.call(bare_spec))
+      expect(accepted).to be(true), stderr
+    end
+  end
+
+  describe "declarations without a description" do
+    let(:undescribed_spec) do
+      ZshFixtures::CompletionSpec.new(
+        program_name: "mycli",
+        nodes: [
+          ZshFixtures::Node.new(
+            path: [], desc: nil, children: [],
+            # Built directly: the helpers above fill in a description, and
+            # a missing one is exactly what this case is about.
+            options: [ZshFixtures::OptionSpec.new(
+              name: "quiet", type: "bool", values: nil, aliases: [], default: nil,
+              desc: nil, required: false, boolean: true, array: false
+            )],
+            arguments: [ZshFixtures::ArgumentSpec.new(
+              name: "target", values: %w[one two], desc: nil, required: true, file: false
+            )]
+          )
+        ]
+      )
+    end
+
+    it "emits a bare option with no empty bracket pair" do
+      expect(described_class.call(undescribed_spec)).to include("'--quiet'")
+    end
+
+    it "falls back to the argument's name as the message zsh shows" do
+      expect(described_class.call(undescribed_spec)).to include("'*:target:(one two)'")
+    end
+
+    it "produces a script zsh accepts" do
+      accepted, stderr = zsh_accepts?(described_class.call(undescribed_spec))
       expect(accepted).to be(true), stderr
     end
   end

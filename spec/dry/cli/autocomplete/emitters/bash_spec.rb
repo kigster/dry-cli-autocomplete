@@ -16,7 +16,6 @@ module BashFixtures
 
   # :values shadows Struct#values by design, matching the field name
   # the interface contract fixes for emitters.
-  # rubocop:disable Lint/StructNewOverride
   OptionSpec = Struct.new(
     :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array,
     keyword_init: true

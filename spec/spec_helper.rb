@@ -12,6 +12,8 @@ if ARGV.empty?
   require "coverage/badge"
 
   SimpleCov.start do
+    enable_coverage :branch
+    track_files "lib/**/*.rb"
     add_filter "/spec/"
     self.formatters = SimpleCov::Formatter::MultiFormatter.new(
       [
