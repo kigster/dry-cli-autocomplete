@@ -11,6 +11,14 @@ eval "$(mycli completion zsh)"     # ~/.zshrc
 
 The script is regenerated when the shell starts, so a new command in the host application completes as soon as it ships. Pressing TAB runs nothing: the shell matches against a word list the script already carries.
 
+## Research
+
+For `dry-cli` gems there is no automatic auto-complete today. There is third party gem [https://github.com/rngtng/dry-cli-completion](https://github.com/rngtng/dry-cli-completion), but it brings several unwanted dependencies and only suppors bash.
+
+
+
+## Goals 
+
 ## 1. Why this exists when `dry-cli-completion` already does
 
 `rngtng/dry-cli-completion` (MIT, v2.0.0) works and is the obvious starting point. Read it before writing anything. It falls short in four specific ways, each of which is an acceptance criterion below.
