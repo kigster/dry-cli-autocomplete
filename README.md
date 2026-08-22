@@ -1,8 +1,13 @@
 # dry-cli-autocomplete
 
 [![Ruby](https://github.com/kigster/dry-cli-autocomplete/actions/workflows/main.yml/badge.svg)](https://github.com/kigster/dry-cli-autocomplete/actions/workflows/main.yml)
+![Coverage](docs/img/badge.svg)
 
 Shell completion for [dry-cli](https://github.com/dry-rb/dry-cli) applications, with no Ruby in the TAB path.
+
+> [!NOTE]
+> 
+> For the specification of this gem see [SPECIFICATION](SPECIFICATION.md)
 
 Your CLI knows its own commands, options, aliases and enum values. The shell does not. This gem walks your registry once, prints a bash or zsh script, and you source it from your profile. Pressing TAB then spawns nothing and costs nothing, because every completion the script will ever offer is already inside it.
 
