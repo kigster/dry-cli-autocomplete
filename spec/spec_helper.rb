@@ -4,8 +4,6 @@ ENV["RUBYOPT"] = "-W0"
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
-require "aruba"
-require "aruba/rspec"
 require "rspec/its"
 require "timeout"
 
@@ -25,9 +23,7 @@ if ARGV.empty?
 
   SimpleCov.at_exit do
     SimpleCov.result.format!
-    # rubocop: disable RSpec/Output
     puts "Coverage: #{SimpleCov.result.covered_percent.round(2)}%"
-    # rubocop: enable RSpec/Output
     FileUtils.mkdir_p("docs/img")
     FileUtils.mv("coverage/badge.svg", "docs/img/badge.svg")
   end

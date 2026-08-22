@@ -1,8 +1,7 @@
-AllCops:
-  TargetRubyVersion: 3.2
+# This file is synced from hanakai-rb/repo-sync
 
-Style/StringLiterals:
-  EnforcedStyle: double_quotes
-
-Style/StringLiteralsInInterpolation:
-  EnforcedStyle: double_quotes
+inherit_from:
+  - https://raw.githubusercontent.com/hanakai-rb/repo-sync/main/rubocop/rubocop.yml
+  <% if File.exist?(".rubocop.local.yml") %>
+  - .rubocop.local.yml
+  <% end %>
