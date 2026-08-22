@@ -32,3 +32,4 @@ lib/tax_engine/vendored_revision.rb
 # still someone's tax return information. Keep them out of git and out of the
 # corpus — see 016's spec, which decided exactly this point.
 spec/fixtures/returns/*-tax-return-*.txt
+**/.standard.yml

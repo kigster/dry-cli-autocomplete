@@ -13,4 +13,5 @@ group :development, :test do
   gem "rspec-its"
   gem "rubocop", "~> 1.21"
   gem "simplecov"
+  gem "yard"
 end
