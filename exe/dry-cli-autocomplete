@@ -1,3 +1,5 @@
 #!/usr/bin/env ruby
 
-require "dry/cli/autocomplete"
+# frozen_string_literal: true
+
+require_relative "../lib/dry/cli/autocomplete"

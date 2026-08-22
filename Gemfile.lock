@@ -2,8 +2,8 @@ PATH
   remote: .
   specs:
     dry-cli-autocomplete (0.1.0)
-      dry-cli
-      dry-inflector
+      dry-cli (>= 1.0)
+      dry-inflector (>= 1.0)
 
 GEM
   remote: https://rubygems.org/

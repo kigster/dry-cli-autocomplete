@@ -12,6 +12,8 @@ if ARGV.empty?
   require "coverage/badge"
 
   SimpleCov.start do
+    enable_coverage :branch
+    track_files "lib/**/*.rb"
     add_filter "/spec/"
     self.formatters = SimpleCov::Formatter::MultiFormatter.new(
       [
@@ -32,7 +34,7 @@ end
 require "dry-cli-autocomplete"
 
 PROJECT_ROOT = File.expand_path("..", __dir__)
-FIXTURES_ROOT = File.join(PROJECT_ROOT, "spec", "fixtures")
+FIXTURES_ROOT = File.join(PROJECT_ROOT, "spec", "support", "fixtures")
 
 RSpec.configure do |config|
   config.disable_monkey_patching!

@@ -8,12 +8,12 @@ Gem::Specification.new do |spec|
   spec.authors = ["Konstantin Gredeskoul"]
   spec.email = ["kigster@gmail.com"]
 
-  spec.summary = "Generate auto-completions for dry-cli based CLI utilities"
-  spec.description = "Generate auto-completions for dry-cli based CLI utilities for BASH and ZSH"
+  spec.summary = "TODO: Write a short summary, because RubyGems requires one."
+  spec.description = "TODO: Write a longer description or delete this line."
   spec.homepage = "https://github.com/kigster/dry-cli-autocomplete"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
-  spec.metadata["allowed_push_host"] = "https://rubygems.org"
+  spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/kigster/dry-cli-autocomplete"
   spec.metadata["changelog_uri"] = "https://github.com/kigster/dry-cli-autocomplete/blob/main/CHANGELOG.md"
@@ -37,9 +37,8 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # Uncomment to register a new dependency of your gem
-  spec.add_dependency "dry-cli"
-  spec.add_dependency "dry-inflector"
+  spec.add_dependency "dry-cli", ">= 1.0"
+  spec.add_dependency "dry-inflector", ">= 1.0"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://guides.rubygems.org/make-your-own-gem/
