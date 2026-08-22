@@ -15,3 +15,8 @@ group :development, :test do
   gem "simplecov"
   gem "yard"
 end
+
+# Not a dependency, a collision test. This gem's files sit inside `module Dry`,
+# so an unqualified constant resolves there first and a bare `Struct` becomes
+# `Dry::Struct` in any host that loads it. Most dry-rb applications do.
+gem "dry-struct", require: false

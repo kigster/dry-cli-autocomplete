@@ -11,16 +11,21 @@ module Dry
       # already holds, so it stays cheap enough to run on every shell start.
       # See SPECIFICATION.md §2.2 and §2.3.
       class SpecBuilder
-        CompletionSpec = Struct.new(:program_name, :nodes, keyword_init: true)
-        Node = Struct.new(:path, :desc, :options, :arguments, :children, keyword_init: true)
+        # ::Struct, not Struct. This file is lexically inside `module Dry`, so
+        # a bare `Struct` resolves to `Dry::Struct` in any host that has
+        # dry-struct loaded, and `Dry::Struct.new` takes different arguments.
+        # The failure appears only in such a host, never in this gem's own
+        # suite, so it reads as "the gem is broken" from the outside.
+        CompletionSpec = ::Struct.new(:program_name, :nodes, keyword_init: true)
+        Node = ::Struct.new(:path, :desc, :options, :arguments, :children, keyword_init: true)
 
         # :values shadows Struct#values by design: it is the field name the
         # interface contract in .plans/001.00-*/plan.md fixes for emitters.
-        OptionSpec = Struct.new(
+        OptionSpec = ::Struct.new(
           :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array,
           keyword_init: true
         )
-        ArgumentSpec = Struct.new(:name, :values, :desc, :required, :file, keyword_init: true)
+        ArgumentSpec = ::Struct.new(:name, :values, :desc, :required, :file, keyword_init: true)
         # rubocop:enable Lint/StructNewOverride
 
         # A bare heuristic, used only when a host does not declare `file:`
