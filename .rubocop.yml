@@ -1,23 +1,7 @@
-AllCops:
-  TargetRubyVersion: 3.2
+# This file is synced from hanakai-rb/repo-sync
 
-Style/StringLiterals:
-  EnforcedStyle: double_quotes
-
-Style/StringLiteralsInInterpolation:
-  EnforcedStyle: double_quotes
-
-Metrics/BlockLength:
-  Exclude:
-    - "spec/**/*"
-
-# The emitters are largely lists of literal shell lines. Splitting them up
-# to satisfy a line count would make them harder to read, not easier, and
-# the zsh one is the largest piece of the gem by design (SPECIFICATION.md §8).
-Metrics/MethodLength:
-  Exclude:
-    - "lib/dry/cli/autocomplete/emitters/*.rb"
-
-Metrics/ClassLength:
-  Exclude:
-    - "lib/dry/cli/autocomplete/emitters/*.rb"
+inherit_from:
+  - https://raw.githubusercontent.com/hanakai-rb/repo-sync/main/rubocop/rubocop.yml
+  <% if File.exist?(".rubocop.local.yml") %>
+  - .rubocop.local.yml
+  <% end %>

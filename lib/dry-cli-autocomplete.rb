@@ -1,1 +1,1 @@
-require_relative "./dry/cli/autocomplete.rb"
+require_relative "./dry/cli/autocomplete"

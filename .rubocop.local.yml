@@ -1,0 +1,16 @@
+# Local overrides on top of the synced hanakai-rb config.
+
+# The emitters are largely lists of literal shell lines. Splitting them up
+# to satisfy a line count would make them harder to read, not easier, and
+# the zsh one is the largest piece of the gem by design (spec.md §8).
+Metrics/MethodLength:
+  Exclude:
+    - "lib/dry/cli/autocomplete/emitters/*.rb"
+
+Metrics/ClassLength:
+  Exclude:
+    - "lib/dry/cli/autocomplete/emitters/*.rb"
+
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
