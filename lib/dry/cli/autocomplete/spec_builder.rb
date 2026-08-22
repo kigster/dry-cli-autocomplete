@@ -12,7 +12,7 @@ module Dry
       # See SPECIFICATION.md §2.2 and §2.3.
       class SpecBuilder
         CompletionSpec = Struct.new(:program_name, :nodes, keyword_init: true)
-        Node = Struct.new(:path, :options, :arguments, :children, keyword_init: true)
+        Node = Struct.new(:path, :desc, :options, :arguments, :children, keyword_init: true)
 
         # :values shadows Struct#values by design: it is the field name the
         # interface contract in .plans/001.00-*/plan.md fixes for emitters.
@@ -63,6 +63,7 @@ module Dry
 
           Node.new(
             path: path,
+            desc: command&.description,
             options: command ? command.options.map { |option| build_option(option) } : [],
             arguments: command ? command.arguments.map { |argument| build_argument(argument) } : [],
             children: visible.keys

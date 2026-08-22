@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "dry/inflector"
+
 module Dry
   class CLI
     module Autocomplete
@@ -88,7 +90,13 @@ module Dry
             ]
           end
 
-          def function_name = "_#{spec.program_name}_completions"
+          def function_name = "_#{shell_identifier}_completions"
+
+          # A program installed as `my-tool` cannot name a shell function
+          # directly. See SPECIFICATION.md §4.2.
+          def shell_identifier
+            Dry::Inflector.new.underscore(spec.program_name.to_s).gsub(/[^A-Za-z0-9_]/, "_")
+          end
 
           def path_key(path) = path.join(" ")
 
