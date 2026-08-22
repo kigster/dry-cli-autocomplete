@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 require "dry/cli/autocomplete/emitters/zsh"
-require "open3"
-require "tempfile"
+require_relative "../../../../support/shell_helpers"
 
 # Built by hand against the CompletionSpec shape documented in
 # .plans/001.00-*/plan.md, matching bash_spec's approach: an emitter is
@@ -35,17 +34,15 @@ end
 GOLDEN_ZSH_DIR = File.join(FIXTURES_ROOT, "..", "golden", "zsh")
 
 RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
+  include ShellHelpers
+
   def golden(name)
     File.read(File.join(GOLDEN_ZSH_DIR, name))
   end
 
   def zsh_accepts?(script)
-    Tempfile.create(["zsh_completion", ".zsh"]) do |file|
-      file.write(script)
-      file.flush
-      _stdout, stderr, status = Open3.capture3("zsh", "-n", file.path)
-      [status.success?, stderr]
-    end
+    requires_shell("zsh")
+    parses?("zsh", script, ".zsh")
   end
 
   let(:nested_spec) do

@@ -36,19 +36,24 @@ RSpec.describe Dry::CLI::Autocomplete::Command do
       expect(stdout).to eq("0")
     end
 
-    it "loads no completion gem's own dependency tree beyond dry-cli" do
+    # Matched against this gem's own lib, not against the full path. On CI
+    # bundler installs gems into vendor/bundle inside a checkout directory
+    # itself named dry-cli-autocomplete, so a regex over the whole path
+    # matches every dependency and the count means nothing.
+    it "pulls in exactly one file of its own, and no others" do
       script = <<~RUBY_SCRIPT
-        $LOAD_PATH.unshift("lib")
+        lib = File.expand_path("lib")
+        $LOAD_PATH.unshift(lib)
         before = $LOADED_FEATURES.dup
         require "dry/cli/autocomplete/command"
-        added = $LOADED_FEATURES - before
-        print added.grep(/autocomplete/).length
+        own = ($LOADED_FEATURES - before).select { |f| f.start_with?(lib + File::SEPARATOR) }
+        print own.map { |f| f.delete_prefix(lib + File::SEPARATOR) }.sort.join(",")
       RUBY_SCRIPT
 
       stdout, stderr, status = Open3.capture3("ruby", "-e", script, chdir: PROJECT_ROOT)
 
       expect(status).to be_success, stderr
-      expect(stdout).to eq("1")
+      expect(stdout).to eq("dry/cli/autocomplete/command.rb")
     end
   end
 

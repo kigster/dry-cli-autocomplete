@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 require "dry/cli/autocomplete/command"
-require "open3"
-require "tempfile"
+require_relative "../../../support/shell_helpers"
 require_relative "../../../support/fixtures/simple_cli"
 require_relative "../../../support/fixtures/package_manager_cli"
 require_relative "../../../support/fixtures/hanami_like_cli"
@@ -12,20 +11,13 @@ require_relative "../../../support/fixtures/hanami_like_cli"
 # or that a real registry survives the whole path. This does: registry ->
 # SpecBuilder -> emitter -> the shell's own parser. See spec.md §5.
 RSpec.describe "generating completions end to end" do
+  include ShellHelpers
+
   REGISTRIES = {
     "a small CLI" => Fixtures::SimpleCLI,
     "a package manager CLI" => Fixtures::PackageManagerCLI,
     "a Hanami-shaped CLI" => Fixtures::HanamiLikeCLI
   }.freeze
-
-  def parses?(shell, script, extension)
-    Tempfile.create(["completion", extension]) do |file|
-      file.write(script)
-      file.flush
-      _stdout, stderr, status = Open3.capture3(shell, "-n", file.path)
-      [status.success?, stderr]
-    end
-  end
 
   def generate(registry, shell, program_name: "mycli")
     command = Dry::CLI::Autocomplete::Command[registry, program_name: program_name].new
@@ -40,11 +32,13 @@ RSpec.describe "generating completions end to end" do
   REGISTRIES.each do |label, registry|
     context "with #{label}" do
       it "produces a bash script bash accepts" do
+        requires_shell("bash")
         accepted, stderr = parses?("bash", generate(registry, "bash"), ".sh")
         expect(accepted).to be(true), stderr
       end
 
       it "produces a zsh script zsh accepts" do
+        requires_shell("zsh")
         accepted, stderr = parses?("zsh", generate(registry, "zsh"), ".zsh")
         expect(accepted).to be(true), stderr
       end
