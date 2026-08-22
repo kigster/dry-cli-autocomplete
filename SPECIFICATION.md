@@ -1,4 +1,4 @@
-# dry-cli-autocomplete: specification
+# `dry-cli-autocomplete`: Specification
 
 Generate static shell completion scripts for any `Dry::CLI` application, from the command registry alone.
 
@@ -11,7 +11,34 @@ eval "$(mycli completion zsh)"     # ~/.zshrc
 
 The script is regenerated when the shell starts, so a new command in the host application completes as soon as it ships. Pressing TAB runs nothing: the shell matches against a word list the script already carries.
 
-## Design decisions, and the measurements behind them
+## Research
+
+Research discovered a completion gems [https://github.com/rngtng/dry-cli-completion](https://github.com/rngtng/dry-cli-completion) howerver it lacks in a several areas (see below).
+
+## Motivation 
+
+## 1. Why this exists when `dry-cli-completion` already does
+
+`rngtng/dry-cli-completion` (MIT, v2.0.0) works and is the obvious starting point. Read it before writing anything. It falls short in four specific ways, each of which is an acceptance criterion below.
+
+**1.1 A node carrying both a command and children loses its children.** `Input#extract_commands` branches `if sub_node.command ... elsif sub_node.children`. An application that registers an overview command at a group's bare name, so that `mycli db --help` can explain what the group is for, gets:
+
+```ruby
+register "db", DbOverview      # node now has a command
+register "db migrate", Migrate # ...and children, which are never walked
+```
+
+Completion for `mycli db <TAB>` offers `--help` and nothing else. The subcommands are invisible. This is not exotic: it is what any application does when it wants group-level help.
+
+**1.2 File arguments are dropped silently.** `Input#input_line` opens with `return if name.include?("<file>")`. A command whose argument name matches `/path/` produces no entry at all, and the generated script contains no `compgen -f`, no `-o default`, no `_filedir`. So `mycli deploy <TAB>` on a path argument completes nothing, which is the single most common thing a user wants.
+
+**1.3 There is no light entry point.** `command.rb` opens with `require "dry/cli/completion"`, which loads the generator, which loads `completely`. A host that only wants to register the command pays for the whole tree at boot. Measured: `require "dry/cli"` is 160ms, adding the completion gem makes it 190ms. Thirty milliseconds on every invocation of a command run once per shell.
+
+**1.4 zsh is a bashcompinit shim.** It emits `autoload -Uz +X bashcompinit && bashcompinit` and then bash. It works, but zsh users get no per-option descriptions and none of the native behaviour they expect.
+
+There is also a dependency argument. `completely` pulls `colsole`, `docopt_ng` and `mister_bin`, and `mister_bin` is itself a CLI framework. Four gems, one of them a second CLI framework, to emit a shell script. This gem generates the script itself and depends on `dry-cli` and `dry-inflector` only.
+
+## 2. Design decisions, and the measurements behind them
 
 These were settled by profiling a real dry-cli application (`tax_engine`, 27 commands, 33 options, 7 arguments). Reproduce them before overturning any of this.
 
@@ -20,7 +47,7 @@ These were settled by profiling a real dry-cli application (`tax_engine`, 27 com
 | Bare `ruby -e ''`                                         |          100ms |
 | `require "dry/cli"`                                       |          160ms |
 | `require "dry/cli"` + `dry-cli-completion` + `completely` |          190ms |
-| `require "tax_engine"` (a heavy host)                     |          520ms |
+| `require "tax_engine"` (a gem with 2.5M lines of data)    |          520ms |
 | First touch of that host's data store                     |         +239ms |
 | **Registry walk and full completion spec build**          |    **0.067ms** |
 | Generated bash script for 27 commands                     | 257 lines, 9KB |
@@ -61,9 +88,7 @@ register "completion", Dry::CLI::Autocomplete::Command[MyCLI]
 
 ## 3. Reading a registry
 
-**Do not use `instance_variable_get(:@node)`**, which is what the existing gem does. `Registry#get` returns a lookup result exposing `command`, `children` and `names`, and that is what to walk.
-
-Be honest about what that buys. Checked against the dry-cli source at 1.4.1, every method this walk touches is marked `@api private`: `Registry#get`, the whole `CommandRegistry` class, `LookupResult#command`, `#children`, `#names` and `#found?`, and every `Node` reader. There is no public way to enumerate a registry. The rule above still holds, because a documented method that a maintainer would think twice about renaming is a better bet than reaching into an ivar, but it is a smaller margin than "public API" implies. Treat a dry-cli upgrade as able to break the walk, and keep the fixture suite (§5) as the thing that catches it.
+Everything needed is public API. **Do not use `instance_variable_get(:@node)`**, which is what the existing gem does. `Registry#get` returns a lookup result exposing `command`, `children` and `names`.
 
 This walk is proven against a foreign registry:
 
@@ -76,13 +101,9 @@ def walk(registry, path = [], acc = [])
 end
 ```
 
-`LookupResult#children` returns `@node.children` directly, a `Hash<String, Node>`, so anything past the first level reads `Node` itself. `Node` has `children`, `command`, `aliases`, `hidden` and `parent`, and no `names`.
+Available per command: `.options` and `.arguments`. Per option: `name`, `type`, `values`, `aliases`, `default`, `desc`, `required?`, `boolean?`, `array?`. Per argument: `name`, `values`, `desc`, `required?`. Per node: `children`, `command`, `aliases`, `hidden`.
 
-Available per command: `.options` and `.arguments`. Per option: `name`, `type`, `values`, `aliases`, `default`, `desc`, `required?`, `boolean?`, `array?`. Per argument: `name`, `values`, `desc`, `required?`.
-
-A command may be registered as an instance instead of a class, and that needs no handling here. `Command` delegates `options`, `arguments` and `description` to `self.class` through `Forwardable` (`lib/dry/cli/command.rb:444`), returning the identical objects, so `result.command.options` reads the same either way. Only reach for `command.is_a?(Class) ? command : command.class`, the way `Node#subcommands!` does, if something later needs the class itself rather than what it declares.
-
-Registering with `hidden: true` keeps a command out of `--help`; **the generator must skip hidden commands too**. Test it for truthiness, never `== false`. `Node#initialize` runs `@hidden = hidden`, reading its own attr_reader before assignment, so a node starts at `nil`, and `hidden!` only ever runs on the terminal node of a `register` call. Every intermediate group node keeps `hidden == nil` for its whole life.
+Registering with `hidden: true` keeps a command out of `--help`; **the generator must skip hidden commands too**.
 
 Run against a registry with three commands, one of them nested, this produces:
 
@@ -114,11 +135,7 @@ An argument whose name suggests a path should complete filenames. Matching on th
 
 ## 5. Testing
 
-**Never test only against one CLI.** A generator tested against a single registry bakes in that registry's shape. The suite must carry at least three fixture registries, and at least one must come from outside this project.
-
-The outside one already exists. dry-cli's own suite carries `spec/support/fixtures/with_registry.rb`, which registers nested groups (`db`, `destroy`, `generate`, `inherited`), gives three of them group-level aliases (`d`, `g`, `i`), and leaves those groups without a command at their bare name. Nobody wrote it with completion in mind, which is the whole point of using it. Copy it into this repo's fixtures with its provenance and licence noted rather than depending on a sibling checkout, since CI has no `../dry-cli`.
-
-One caveat when reading that repository for reference: its `main` runs ahead of the released gem. `Registry#command_class` and `Registry#option` are marked `@since NEXT` and are absent from dry-cli 1.4.1, which is what `Gemfile.lock` resolves. Nothing here may call them.
+**Never test only against one CLI.** A generator tested against a single registry bakes in that registry's shape. The suite must carry at least three fixture registries, and at least one must come from outside this project. Candidates: the examples in dry-cli's own repository, and Hanami's CLI.
 
 Each fixture must exercise: a nested group with a command at its bare name (§1.1), a file argument (§1.2), an option with `values`, a boolean flag, an option with an alias, and a hidden command.
 
@@ -168,35 +185,50 @@ Suggested order: walk, then bash, then zsh. The bash emitter proves the spec bui
 
 ## 9. Work units
 
-This section did not exist when the folder entered Building; an implementer found nothing here to build against and split it before writing any code, per the instruction that governs exactly this case. Four units, non-overlapping in the files they own, matching §8's table. WU1 has no dependency on the others; WU2 and WU3 depend only on WU1's *interface* below, not its code, so they can be built concurrently with each other and with WU1. WU4 integrates all three and is the last to land.
+### 1. Registry walk and spec builder
 
-### WU1 — Registry walk and spec builder
+This section did not exist when the folder entered Building; an implementer found nothing here to build against and split it before writing any code, per the instruction that governs exactly this case. Four units, non-overlapping in the files they own, matching §8's table. #1 has no dependency on the others; #2 and #3 depend only on #1's *interface* below, not its code, so they can be built concurrently with each other and with WU1. WU4 integrates all three and is the last to land.
 
-Owns: `lib/dry/cli/autocomplete/spec_builder.rb`, `spec/dry/cli/autocomplete/spec_builder_spec.rb`, `spec/support/fixtures/**`.
+Owns: 
+
+- `lib/dry/cli/autocomplete/spec_builder.rb`, 
+- `spec/dry/cli/autocomplete/spec_builder_spec.rb`, 
+- `spec/support/fixtures/**`.
 
 Builds the fixture registries the whole suite depends on (§5: at least three, at least one from outside this project) and the walker (§3) that turns a registry into the `CompletionSpec` shape defined below. Owns file-argument *detection* (§4.3): the heuristic and any explicit declaration are resolved here, so emitters only ever read a plain `file?` flag and never re-derive it.
 
 Done when: builds a correct spec for every fixture; hidden commands are absent from it; a node with both a command and children reports both (§1.1 acceptance criterion); nothing outside the registry is touched (no file reads, no host constants beyond what `values:` already declared).
 
-### WU2 — bash emitter
+### 2. `BASH` emitter
 
-Owns: `lib/dry/cli/autocomplete/emitters/bash.rb`, `spec/dry/cli/autocomplete/emitters/bash_spec.rb`.
+Owns: 
+
+* `lib/dry/cli/autocomplete/emitters/bash.rb`, 
+* `spec/dry/cli/autocomplete/emitters/bash_spec.rb`.
 
 Consumes a `CompletionSpec` (build one by hand in specs against the documented shape; do not import WU1's fixtures until WU1 has landed) and emits the `complete -F` script per §4.1: `compgen -W` over each node's word list, `compgen -f` where `file?` is set.
 
 Done when: golden-file tests cover a fixture with a nested group, a file argument, an aliased option, and a hidden command absent from output; every golden file passes `bash -n`.
 
-### WU3 — zsh emitter
+### 3. `ZSH` emitter
 
-Owns: `lib/dry/cli/autocomplete/emitters/zsh.rb`, `spec/dry/cli/autocomplete/emitters/zsh_spec.rb`.
+Owns: 
+
+* `lib/dry/cli/autocomplete/emitters/zsh.rb`
+* spec/dry/cli/autocomplete/emitters/zsh_spec.rb`.
 
 Same `CompletionSpec` input as WU2. Emits a native `#compdef` script using `_arguments`/`_describe` (§4.1), carrying each option's `desc`. Not a bashcompinit shim.
 
 Done when: golden-file tests as WU2, output validated with `zsh -n`, and per-option descriptions are visible in the generated `_describe` calls.
 
-### WU4 — Generator and command shim
+### 4. Generator and command shim
 
-Owns: `lib/dry/cli/autocomplete/generator.rb`, `lib/dry/cli/autocomplete/command.rb`, `spec/dry/cli/autocomplete/generator_spec.rb`, `spec/dry/cli/autocomplete/command_spec.rb`.
+Owns:
+
+* `lib/dry/cli/autocomplete/generator.rb`, 
+* `lib/dry/cli/autocomplete/command.rb`, 
+* `spec/dry/cli/autocomplete/generator_spec.rb`, 
+* `spec/dry/cli/autocomplete/command_spec.rb`.
 
 The generator is the small piece that ties a registry to an emitter: given a registry and a shell name, run WU1's spec builder, hand the result to WU2 or WU3's emitter, return the script. `command.rb` is the shim (§2.4): defines the command class, derives the program's shell-identifier with `Dry::Inflector#underscore` (§4.2, never a hand-rolled `gsub`), and `require`s `generator` only inside `#call`.
 

@@ -66,7 +66,7 @@ The emitters take the same description and share no code. A fourth shell should 
 ## Conventions
 
 - **The generator is not a hot path.** It runs in 0.067ms against a 27-command registry. Do not optimise it, do not add native extensions, and do not cache anything. The reasoning is in `SPECIFICATION.md` §2.3.
-- **Public API only when reading a registry.** `registry.get(path)` returns a result exposing `command`, `children` and `names`. `instance_variable_get(:@node)` is what the gem this one replaces does, and it will break on a dry-cli release.
+- **Read a registry through its methods, not its ivars.** `registry.get(path)` returns a result exposing `command`, `children` and `names`. `instance_variable_get(:@node)` is what the gem this one replaces does, and it will break on a dry-cli release. Do not mistake this for a public API: in 1.4.1 `Registry#get`, all of `CommandRegistry`, every `LookupResult` reader and every `Node` reader carry `@api private`. There is no public way to enumerate a registry, so an upgrade can break the walk and the fixture suite is what catches it.
 - **Test against registries this project did not write.** A generator tested against one CLI encodes that CLI's shape. `SPECIFICATION.md` §5.
 - **Validate generated shell with the shell.** `bash -n` and `zsh -n` parse without executing. A regex over generated output proves nothing about whether it runs.
 - **Commit messages**: imperative mood, 50-character subject, no full stop. A body only where the change needs explaining, saying what and why.
