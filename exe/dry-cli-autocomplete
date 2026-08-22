@@ -1,3 +1,3 @@
 #!/usr/bin/env ruby
 
-require "dry/cli/autocomplete"
+require_relative "../lib/dry/cli/autocomplete"
