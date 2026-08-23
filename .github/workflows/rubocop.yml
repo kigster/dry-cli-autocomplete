@@ -1,0 +1,40 @@
+name: Rubocop
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Ruby ${{ matrix.ruby }}
+    strategy:
+      matrix:
+        ruby:
+          - '4.0.6'
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      # The suite validates every generated script with the shell that has to
+      # read it. ubuntu-latest ships bash but not zsh, and spec/support/
+      # shell_helpers.rb turns a missing shell into a failure when CI is set,
+      # so that those checks cannot quietly stop running.
+      - name: Install zsh
+        run: sudo apt-get update && sudo apt-get install -y zsh
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+
+      - name: Run Rubocop
+        run: bundle exec rubocop
