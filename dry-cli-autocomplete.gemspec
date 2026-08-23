@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "Supports auto-completion for dry-cli powered Ruby CLI tools, including sub-commands, in BASH and ZSH."
   spec.homepage = "https://github.com/kigster/dry-cli-autocomplete"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.2.0"
+  spec.required_ruby_version = ">= 4.0"
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/kigster/dry-cli-autocomplete"
