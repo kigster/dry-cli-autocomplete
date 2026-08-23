@@ -1,7 +1,11 @@
 _mycli_completions() {
-  local cur path word next_path words i
+  local cur prev path word next_path words i
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
+  prev=""
+  if [ "$COMP_CWORD" -gt 0 ]; then
+    prev="${COMP_WORDS[$((COMP_CWORD - 1))]}"
+  fi
   path=""
   i=1
   while [ "$i" -lt "$COMP_CWORD" ]; do
@@ -20,11 +24,15 @@ _mycli_completions() {
     i=$((i + 1))
   done
 
+  case "$path:$prev" in
+    "version:--format") COMPREPLY=($(compgen -W "json plain" -- "$cur")); return ;;
+  esac
+
   words=""
   case "$path" in
     "") words="version deploy db" ;;
     "version") words="--format" ;;
-    "deploy") words="--force -f" ;;
+    "deploy") words="--force -f staging production" ;;
     "db") words="migrate --verbose -v" ;;
   esac
 

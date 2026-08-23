@@ -34,15 +34,19 @@ module Dry
           attr_reader :spec
 
           def body
-            header_lines + path_walk_lines + word_lookup_lines + footer_lines
+            header_lines + path_walk_lines + option_value_lines + word_lookup_lines + footer_lines
           end
 
           def header_lines
             [
               "#{function_name}() {",
-              "  local cur path word next_path words i",
+              "  local cur prev path word next_path words i",
               "  COMPREPLY=()",
               '  cur="${COMP_WORDS[COMP_CWORD]}"',
+              '  prev=""',
+              '  if [ "$COMP_CWORD" -gt 0 ]; then',
+              '    prev="${COMP_WORDS[$((COMP_CWORD - 1))]}"',
+              "  fi",
               '  path=""',
               "  i=1"
             ]
@@ -119,11 +123,39 @@ module Dry
             end
           end
 
+          # Children, flags, and any values a positional declares: all three are
+          # legitimate next words at this point in the line.
           def node_words(node)
-            node.children + node.options.flat_map { |option| option_words(option) }
+            node.children +
+              node.options.flat_map { |option| option_words(option) } +
+              node.arguments.flat_map { |argument| Array(argument.values) }
           end
 
           def option_words(option) = ["--#{option.name}"] + Array(option.aliases)
+
+          # An option that declares values gets its own arm, keyed on the word
+          # before the cursor. Typing `--format ` then TAB should offer what
+          # --format accepts, not the command list again, so this arm answers
+          # and returns rather than falling through. Long name and every alias
+          # are listed together, since `-f` accepts what `--format` accepts.
+          def option_value_lines
+            arms = spec.nodes.flat_map do |node|
+              node.options.filter_map do |option|
+                values = Array(option.values)
+                next if values.empty?
+
+                key = path_key(node.path)
+                option_words(option).map do |name|
+                  "    \"#{quote(key)}:#{quote(name)}\") " \
+                    "COMPREPLY=($(compgen -W \"#{quote(values.join(" "))}\" -- \"$cur\")); return ;;"
+                end
+              end
+            end.flatten
+
+            return [] if arms.empty?
+
+            ['  case "$path:$prev" in', *arms, "  esac", ""]
+          end
 
           def file_completion_lines
             paths = spec.nodes.select { |node| node.arguments.any?(&:file) }.map { |node| path_key(node.path) }

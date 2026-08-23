@@ -1,7 +1,11 @@
 _my_tool_completions() {
-  local cur path word next_path words i
+  local cur prev path word next_path words i
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
+  prev=""
+  if [ "$COMP_CWORD" -gt 0 ]; then
+    prev="${COMP_WORDS[$((COMP_CWORD - 1))]}"
+  fi
   path=""
   i=1
   while [ "$i" -lt "$COMP_CWORD" ]; do

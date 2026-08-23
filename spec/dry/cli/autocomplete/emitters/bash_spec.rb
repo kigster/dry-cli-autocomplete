@@ -132,7 +132,9 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Bash do
     end
 
     it "completes an option's long name and its alias" do
-      expect(complete(nested_spec, "mycli", "deploy", "")).to contain_exactly("--force", "-f")
+      # Alongside the positional's declared values, which belong at this
+      # position too; the example below covers those separately.
+      expect(complete(nested_spec, "mycli", "deploy", "")).to include("--force", "-f")
     end
 
     it "completes real filenames under a file argument, not the enum's words" do
@@ -142,6 +144,46 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Bash do
           expect(complete(nested_spec, "mycli", "db", "migrate", "")).to include("20240101_add_users.rb")
         end
       end
+    end
+
+    # spec.md §2.2: values declared on an option are free, and must be
+    # included. They were emitted for zsh and dropped for bash, so
+    # `mycli version --format <TAB>` repeated the command list instead of
+    # answering the question the user had just asked.
+    it "completes an option's declared values once that option is the previous word" do
+      expect(complete(nested_spec, "mycli", "version", "--format", "")).to contain_exactly("json", "plain")
+    end
+
+    it "offers only those values, not the node's own word list" do
+      expect(complete(nested_spec, "mycli", "version", "--format", "")).not_to include("--format")
+    end
+
+    it "narrows the values on a partial word" do
+      expect(complete(nested_spec, "mycli", "version", "--format", "j")).to contain_exactly("json")
+    end
+
+    it "answers an alias the same way it answers the long name" do
+      spec = BashFixtures::CompletionSpec.new(
+        program_name: "mycli",
+        nodes: [
+          BashFixtures::Node.new(path: [], options: [], arguments: [], children: %w[emit]),
+          BashFixtures::Node.new(
+            path: ["emit"], arguments: [], children: [],
+            options: [BashFixtures.option(name: "format", aliases: ["-o"], values: %w[json yaml])]
+          )
+        ]
+      )
+
+      expect(complete(spec, "mycli", "emit", "-o", "")).to contain_exactly("json", "yaml")
+    end
+
+    it "falls through to the word list after a boolean flag, which takes no value" do
+      expect(complete(nested_spec, "mycli", "deploy", "--force", ""))
+        .to contain_exactly("--force", "-f", "staging", "production")
+    end
+
+    it "offers a positional's declared values at that position" do
+      expect(complete(nested_spec, "mycli", "deploy", "")).to include("staging", "production")
     end
 
     it "does not offer file completion outside a file argument's node" do
