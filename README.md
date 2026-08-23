@@ -85,20 +85,17 @@ argument :component, values: %w[major minor]   # completes major minor
 
 ## Installation
 
-
 ```bash
 gem install dry-cli-autocomplete
 ```
 
 Or add it to your `Gemfile`.
 
-Theh:
+Then register the command in your CLI. Require the command file, not the gem:
+it pulls in no emitter and no generator, so a host pays nothing at boot for a
+command that runs once per shell.
 
 ```ruby
-require "dry-cli-autocomplete"
-
-# Register the command in your CLI:
-
 require "dry/cli/autocomplete/command"
 
 module MyCLI
