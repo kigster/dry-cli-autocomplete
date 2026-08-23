@@ -36,7 +36,7 @@ module Dry
         desc "Print a shell completion script"
 
         argument :shell, required: true, values: SHELLS,
-          desc: "Shell to generate completions for"
+                         desc: "Shell to generate completions for"
 
         example [
           "bash > /usr/local/etc/bash_completion.d/#{File.basename($PROGRAM_NAME)}",

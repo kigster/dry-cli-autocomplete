@@ -119,7 +119,7 @@ module Dry
               words = node_words(node)
               next if words.empty?
 
-              "\"#{quote(path_key(node.path))}\") words=\"#{quote(words.join(" "))}\" ;;"
+              "\"#{quote(path_key(node.path))}\") words=\"#{quote(words.join(' '))}\" ;;"
             end
           end
 
@@ -147,7 +147,7 @@ module Dry
                 key = path_key(node.path)
                 option_words(option).map do |name|
                   "    \"#{quote(key)}:#{quote(name)}\") " \
-                    "COMPREPLY=($(compgen -W \"#{quote(values.join(" "))}\" -- \"$cur\")); return ;;"
+                    "COMPREPLY=($(compgen -W \"#{quote(values.join(' '))}\" -- \"$cur\")); return ;;"
                 end
               end
             end.flatten

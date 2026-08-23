@@ -143,7 +143,7 @@ module Dry
           def value_action(values)
             return "" if values.nil? || values.empty?
 
-            "(#{values.map { |value| escape_spec(value) }.join(" ")})"
+            "(#{values.map { |value| escape_spec(value) }.join(' ')})"
           end
 
           def bracketed(desc)
@@ -158,7 +158,7 @@ module Dry
           end
 
           def describe_tag(node)
-            node.path.empty? ? "command" : "#{node.path.join(" ")} command"
+            node.path.empty? ? "command" : "#{node.path.join(' ')} command"
           end
 
           def path_key(path) = path.join(" ")
