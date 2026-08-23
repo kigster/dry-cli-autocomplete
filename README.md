@@ -15,8 +15,6 @@ Your CLI knows its own commands, options, aliases and enum values. The shell doe
 mycli completion bash > /usr/local/etc/bash_completion.d/mycli
 ```
 
-> **Status:** not yet released to RubyGems. The registry walk, both emitters and the command shim are written and tested, against three fixture registries, with every generated script checked by `bash -n` or `zsh -n`. Install it from git until there is a released version.
-
 ## The problem
 
 A dry-cli app with nested subcommands gives the shell nothing to work with. `mycli db <TAB>` completes filenames from the current directory, which is never what you wanted.
