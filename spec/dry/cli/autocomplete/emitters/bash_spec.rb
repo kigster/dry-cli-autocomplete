@@ -21,8 +21,6 @@ module BashFixtures
     keyword_init: true
   )
   ArgumentSpec = Struct.new(:name, :values, :desc, :required, :file, keyword_init: true)
-  # rubocop:enable Lint/StructNewOverride
-
   def self.option(name:, aliases: [], boolean: false, values: nil)
     OptionSpec.new(
       name: name, type: boolean ? "bool" : "string", values: values, aliases: aliases,

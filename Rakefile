@@ -6,7 +6,7 @@ require "timeout"
 require "yard"
 
 def shell(*args)
-  puts "running: #{args.join(" ")}"
+  puts "running: #{args.join(' ')}"
   system(args.join(" "))
 end
 
@@ -29,7 +29,7 @@ end
 task build: :permissions
 
 YARD::Rake::YardocTask.new(:doc) do |t|
-  t.files = %w[lib/**/*.rb exe/*.rb - README.md LICENSE.txt CHANGELOG.md]
+  t.files = %w[lib/**/*.rb exe/*.rb - README.md LICENSE.txt CHANGELOG.md SPECIFICATION.md]
   t.options.unshift("--title", '"FlowEngine — DSL + AST for buildiong complex flows in Ruby."')
   t.after = -> { exec("open doc/index.html") } if RUBY_PLATFORM =~ /darwin/
 end

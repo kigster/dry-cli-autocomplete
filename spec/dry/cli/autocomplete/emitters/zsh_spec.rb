@@ -17,8 +17,6 @@ module ZshFixtures
     keyword_init: true
   )
   ArgumentSpec = Struct.new(:name, :values, :desc, :required, :file, keyword_init: true)
-  # rubocop:enable Lint/StructNewOverride
-
   def self.option(name:, desc: nil, aliases: [], boolean: false, values: nil)
     OptionSpec.new(
       name: name, type: boolean ? "bool" : "string", values: values, aliases: aliases,
@@ -60,7 +58,7 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
           path: ["deploy"], desc: "Deploy the application", children: [],
           options: [ZshFixtures.option(name: "force", desc: "Skip confirmation", aliases: ["-f"], boolean: true)],
           arguments: [ZshFixtures.argument(name: "target", desc: "Target environment",
-            values: %w[staging production])]
+                                           values: %w[staging production])]
         ),
         ZshFixtures::Node.new(
           path: ["db"], desc: "Show pending migrations", arguments: [], children: %w[migrate],
