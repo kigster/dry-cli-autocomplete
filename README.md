@@ -168,7 +168,10 @@ Two conventions in the suite are worth knowing before you add to it. Fixtures in
 
 Bug reports and pull requests are welcome at <https://github.com/kigster/dry-cli-autocomplete>.
 
-A note on the name. The `dry-` prefix and the `Dry::CLI::Autocomplete` namespace do not imply endorsement by dry-rb. This is an independent gem that extends theirs.
+> [!WARNING]
+>
+> A quick note on the name. The `dry-` prefix and the `Dry::CLI::Autocomplete` namespace do not imply endorsement by `dry-rb`. This is an independent gem that extends theirs. I hope this functionality will make it into `dry-cli` one day, however.
+
 
 ## License
 
