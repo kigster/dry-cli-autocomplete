@@ -78,12 +78,26 @@ module Dry
             lines + ["  esac", ""]
           end
 
+          # A #compdef file dropped on $fpath is autoloaded by the completion
+          # system with its own name on the function stack, and is expected to
+          # do the completion. The same text sourced from a profile, which is
+          # what `eval "$(mycli completion zsh)"` does, runs with no completion
+          # in progress: calling the function there reaches for _describe
+          # before the completion system has defined it, and zsh reports a
+          # command-not-found from inside a file the user never wrote.
+          #
+          # Naming the function after the program, which is the convention a
+          # compdef file follows anyway, lets one line tell the two apart.
           def footer_lines
             [
               "  return ret",
               "}",
               "",
-              "#{function_name} \"$@\""
+              "if [ \"$funcstack[1]\" = \"#{function_name}\" ]; then",
+              "  #{function_name} \"$@\"",
+              "else",
+              "  compdef #{function_name} #{spec.program_name}",
+              "fi"
             ]
           end
 
@@ -173,7 +187,10 @@ module Dry
 
           def single_quote(str) = "'#{str.to_s.gsub("'", "'\\\\''")}'"
 
-          def function_name = "_#{shell_identifier}_completions"
+          # `_mycli`, not `_mycli_completions`: zsh autoloads a compdef file by
+          # the name of the function it defines, so matching that convention is
+          # what makes the footer's fpath check work.
+          def function_name = "_#{shell_identifier}"
 
           # A program installed as `my-tool` cannot name a shell function
           # directly. See SPECIFICATION.md §4.2.

@@ -117,6 +117,14 @@ For zsh, put it anywhere on your `$fpath`:
 mycli completion zsh > "${fpath[1]}/_mycli"
 ```
 
+Sourcing it from `.zshrc` works too, if you would rather not manage a file:
+
+```bash
+eval "$(mycli completion zsh)"
+```
+
+The script tells the two apart and registers itself either way.
+
 Regenerate it when you add or rename commands. Nothing watches for changes, by design.
 
 ## Why the script is static
@@ -165,9 +173,7 @@ Two conventions in the suite are worth knowing before you add to it. Fixtures in
 Bug reports and pull requests are welcome at <https://github.com/kigster/dry-cli-autocomplete>.
 
 > [!WARNING]
->
 > A quick note on the name. The `dry-` prefix and the `Dry::CLI::Autocomplete` namespace do not imply endorsement by `dry-rb`. This is an independent gem that extends theirs. I hope this functionality will make it into `dry-cli` one day, however.
-
 
 ## License
 

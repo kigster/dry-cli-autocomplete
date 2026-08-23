@@ -2,6 +2,7 @@
 
 require "dry/cli/autocomplete/emitters/zsh"
 require_relative "../../../../support/shell_helpers"
+require "tmpdir"
 
 # Built by hand against the CompletionSpec shape documented in
 # .plans/001.00-*/plan.md, matching bash_spec's approach: an emitter is
@@ -138,12 +139,60 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
     it "underscores the function name while leaving the command alone" do
       output = described_class.call(dashed_spec)
 
-      expect(output).to include("_my_tool_completions()").and include("#compdef my-tool")
+      expect(output).to include("_my_tool()").and include("#compdef my-tool")
     end
 
     it "produces a script zsh accepts" do
       accepted, stderr = zsh_accepts?(described_class.call(dashed_spec))
       expect(accepted).to be(true), stderr
+    end
+  end
+
+  # The generated script has two homes, and it used to work in only one.
+  # Dropped on $fpath it is autoloaded inside a completion context. Sourced
+  # from a profile, `eval "$(mycli completion zsh)"`, there is no completion
+  # in progress, and a trailing call to the function reached _arguments and
+  # _describe outside one: zsh answered with a wall of
+  # "_tags:comptags:36: can only be called from completion function".
+  describe "registering with the completion system" do
+    def zsh_run(script_body)
+      Tempfile.create(["_mycli", ""]) do |file|
+        file.write(described_class.call(nested_spec))
+        file.flush
+        Open3.capture3("zsh", "-c", <<~ZSH)
+          autoload -Uz compinit; compinit -u -D
+          #{script_body.gsub('SCRIPT', file.path)}
+        ZSH
+      end
+    end
+
+    it "registers the completion when the script is sourced from a profile" do
+      requires_shell("zsh")
+      stdout, stderr, = zsh_run('eval "$(cat SCRIPT)"; print "comps=${_comps[mycli]:-NONE}"')
+
+      expect(stdout).to include("comps=_mycli"), stderr
+    end
+
+    it "says nothing on stderr when sourced, rather than complaining about comptags" do
+      requires_shell("zsh")
+      _stdout, stderr, = zsh_run('eval "$(cat SCRIPT)"')
+
+      expect(stderr).to be_empty
+      expect(stderr).not_to include("comptags")
+    end
+
+    it "still completes when autoloaded from fpath, which is the documented way" do
+      requires_shell("zsh")
+      Dir.mktmpdir do |dir|
+        File.write(File.join(dir, "_mycli"), described_class.call(nested_spec))
+        stdout, stderr, = Open3.capture3("zsh", "-c", <<~ZSH)
+          fpath=(#{dir} $fpath)
+          autoload -Uz compinit; compinit -u -D
+          print "comps=${_comps[mycli]:-NONE}"
+        ZSH
+
+        expect(stdout).to include("comps=_mycli"), stderr
+      end
     end
   end
 
