@@ -87,15 +87,20 @@ argument :component, values: %w[major minor]   # completes major minor
 
 ## Installation
 
-Not yet on RubyGems. Until it is, point at the repository:
 
-```ruby
-gem "dry-cli-autocomplete", github: "kigster/dry-cli-autocomplete"
+```bash
+gem install dry-cli-autocomplete
 ```
 
-Register the command in your CLI:
+Or add it to your `Gemfile`.
+
+Theh:
 
 ```ruby
+require "dry-cli-autocomplete"
+
+# Register the command in your CLI:
+
 require "dry/cli/autocomplete/command"
 
 module MyCLI
