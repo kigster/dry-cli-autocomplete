@@ -13,9 +13,9 @@ The script is regenerated when the shell starts, so a new command in the host ap
 
 ## Research
 
-Research discovered a completion gems [https://github.com/rngtng/dry-cli-completion](https://github.com/rngtng/dry-cli-completion) howerver it lacks in a several areas (see below).
+Research discovered a completion gems [https://github.com/rngtng/dry-cli-completion](https://github.com/rngtng/dry-cli-completion) however it lacks in a several areas (see below).
 
-## Motivation 
+## Motivation
 
 ## 1. Why this exists when `dry-cli-completion` already does
 
@@ -189,10 +189,10 @@ Suggested order: walk, then bash, then zsh. The bash emitter proves the spec bui
 
 This section did not exist when the folder entered Building; an implementer found nothing here to build against and split it before writing any code, per the instruction that governs exactly this case. Four units, non-overlapping in the files they own, matching §8's table. #1 has no dependency on the others; #2 and #3 depend only on #1's *interface* below, not its code, so they can be built concurrently with each other and with WU1. WU4 integrates all three and is the last to land.
 
-Owns: 
+Owns:
 
-- `lib/dry/cli/autocomplete/spec_builder.rb`, 
-- `spec/dry/cli/autocomplete/spec_builder_spec.rb`, 
+- `lib/dry/cli/autocomplete/spec_builder.rb`,
+- `spec/dry/cli/autocomplete/spec_builder_spec.rb`,
 - `spec/support/fixtures/**`.
 
 Builds the fixture registries the whole suite depends on (§5: at least three, at least one from outside this project) and the walker (§3) that turns a registry into the `CompletionSpec` shape defined below. Owns file-argument *detection* (§4.3): the heuristic and any explicit declaration are resolved here, so emitters only ever read a plain `file?` flag and never re-derive it.
@@ -201,10 +201,10 @@ Done when: builds a correct spec for every fixture; hidden commands are absent f
 
 ### 2. `BASH` emitter
 
-Owns: 
+Owns:
 
-* `lib/dry/cli/autocomplete/emitters/bash.rb`, 
-* `spec/dry/cli/autocomplete/emitters/bash_spec.rb`.
+- `lib/dry/cli/autocomplete/emitters/bash.rb`,
+- `spec/dry/cli/autocomplete/emitters/bash_spec.rb`.
 
 Consumes a `CompletionSpec` (build one by hand in specs against the documented shape; do not import WU1's fixtures until WU1 has landed) and emits the `complete -F` script per §4.1: `compgen -W` over each node's word list, `compgen -f` where `file?` is set.
 
@@ -212,10 +212,10 @@ Done when: golden-file tests cover a fixture with a nested group, a file argumen
 
 ### 3. `ZSH` emitter
 
-Owns: 
+Owns:
 
-* `lib/dry/cli/autocomplete/emitters/zsh.rb`
-* spec/dry/cli/autocomplete/emitters/zsh_spec.rb`.
+- `lib/dry/cli/autocomplete/emitters/zsh.rb`
+- spec/dry/cli/autocomplete/emitters/zsh_spec.rb\`.
 
 Same `CompletionSpec` input as WU2. Emits a native `#compdef` script using `_arguments`/`_describe` (§4.1), carrying each option's `desc`. Not a bashcompinit shim.
 
@@ -225,10 +225,10 @@ Done when: golden-file tests as WU2, output validated with `zsh -n`, and per-opt
 
 Owns:
 
-* `lib/dry/cli/autocomplete/generator.rb`, 
-* `lib/dry/cli/autocomplete/command.rb`, 
-* `spec/dry/cli/autocomplete/generator_spec.rb`, 
-* `spec/dry/cli/autocomplete/command_spec.rb`.
+- `lib/dry/cli/autocomplete/generator.rb`,
+- `lib/dry/cli/autocomplete/command.rb`,
+- `spec/dry/cli/autocomplete/generator_spec.rb`,
+- `spec/dry/cli/autocomplete/command_spec.rb`.
 
 The generator is the small piece that ties a registry to an emitter: given a registry and a shell name, run WU1's spec builder, hand the result to WU2 or WU3's emitter, return the script. `command.rb` is the shim (§2.4): defines the command class, derives the program's shell-identifier with `Dry::Inflector#underscore` (§4.2, never a hand-rolled `gsub`), and `require`s `generator` only inside `#call`.
 
