@@ -168,6 +168,10 @@ bin/console             # IRB with the gem loaded
 
 Two conventions in the suite are worth knowing before you add to it. Fixtures include registries this project did not write, because a generator tested against one CLI quietly encodes that CLI's shape. And generated scripts are validated by the shells themselves, with `bash -n` and `zsh -n` parsing without executing, since a regex over the output proves nothing about whether it runs.
 
+## Author
+
+* Konstantin Gredeskoul pairing with Claude Code. Every line has been reviewed and co-written by a human. The commits were pushed by Claude to save time writing comment descriptions.
+
 ## Contributing
 
 Bug reports and pull requests are welcome at <https://github.com/kigster/dry-cli-autocomplete>.
