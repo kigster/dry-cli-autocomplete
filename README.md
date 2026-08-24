@@ -5,7 +5,13 @@
 Shell completion for [dry-cli](https://github.com/dry-rb/dry-cli) applications, with no Ruby in the TAB path.
 
 > [!NOTE]
-> For the specification of this gem see [SPECIFICATION](SPECIFICATION.md)
+> For the original specification of this gem see [SPECIFICATION](SPECIFICATION.md)
+
+---
+
+> [!WARNING]
+>
+> This gem was written with a collaboration with Claude Code. Most of the ruby was written by a human (myself), reviewed and pushed to GitHub by Claude (anyone loves writing commit descriptions?). The part where Claude authored the most code is the ZSH autocompletion code as I'm less familiar with it than BASH. If you prefer not to use gems that had some AI contributions that were reviewed by a human, do not use this gem.
 
 Your CLI knows its own commands, options, aliases and enum values. The shell does not. This gem walks your registry once, prints a bash or zsh script, and you source it from your profile. Pressing TAB then spawns nothing and costs nothing, because every completion the script will ever offer is already inside it.
 
