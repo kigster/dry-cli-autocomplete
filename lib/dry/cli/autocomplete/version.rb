@@ -9,7 +9,7 @@ module Dry
   # inherits from Object, so an empty reopening is compatible either way.
   class CLI
     module Autocomplete
-      VERSION = "0.1.3"
+      VERSION = "0.5.0"
     end
   end
 end

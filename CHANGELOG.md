@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-16
+
 Documentation only; no change to the gem's behaviour.
 
 - The README now matches the generated scripts. The bash example is real output, a zsh excerpt is included, and it documents `file:` on arguments and the name-based file guess, `program_name:`, option and positional values, `eval` for bash, placing the zsh `eval` after `compinit`, and Ruby 4.0.
