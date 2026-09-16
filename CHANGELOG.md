@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+Documentation only; no change to the gem's behaviour.
+
+- The README now matches the generated scripts. The bash example is real output, a zsh excerpt is included, and it documents `file:` on arguments and the name-based file guess, `program_name:`, option and positional values, `eval` for bash, placing the zsh `eval` after `compinit`, and Ruby 4.0.
+- The specification moved to `docs/SPECIFICATION.md` and is marked as describing version 0.1.0. It is no longer part of the YARD docs.
+- The YARD docs title names this gem instead of an unrelated project.
+- Added a warning about AI contributions and an author section to the README.
+
 ## [0.1.3] - 2026-08-23
 
 - The zsh script now registers itself when sourced. `eval "$(mycli completion zsh)"`
