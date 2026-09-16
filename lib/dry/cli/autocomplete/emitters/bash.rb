@@ -7,7 +7,7 @@ module Dry
     module Autocomplete
       module Emitters
         # Turns a CompletionSpec into a bash `complete -F` script.
-        # See SPECIFICATION.md §4.1: a static, case-statement walk over
+        # See docs/SPECIFICATION.md §4.1: a static, case-statement walk over
         # COMP_WORDS resolves which node the cursor is under, then
         # `compgen -W` fills COMPREPLY from that node's children and
         # option flags, with `compgen -f` added where an argument is a
@@ -97,7 +97,7 @@ module Dry
           def function_name = "_#{shell_identifier}_completions"
 
           # A program installed as `my-tool` cannot name a shell function
-          # directly. See SPECIFICATION.md §4.2.
+          # directly. See docs/SPECIFICATION.md §4.2.
           def shell_identifier
             Dry::Inflector.new.underscore(spec.program_name.to_s).gsub(/[^A-Za-z0-9_]/, "_")
           end

@@ -12,7 +12,7 @@ module Dry
       # for whatever this require pulls on *every* invocation, while the
       # command itself runs about once per shell. The generator is required
       # inside #call, where the cost is actually incurred. See
-      # SPECIFICATION.md §1.3 and §2.4, and the spec that pins it.
+      # docs/SPECIFICATION.md §1.3 and §2.4, and the spec that pins it.
       class Command < Dry::CLI::Command
         SHELLS = %w[bash zsh].freeze
 

@@ -1,14 +1,18 @@
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-16
+
+Documentation only; no change to the gem's behaviour.
+
+- The README now matches the generated scripts. The bash example is real output, a zsh excerpt is included, and it documents `file:` on arguments and the name-based file guess, `program_name:`, option and positional values, `eval` for bash, placing the zsh `eval` after `compinit`, and Ruby 4.0.
+- The specification moved to `docs/SPECIFICATION.md` and is marked as describing version 0.1.0. It is no longer part of the YARD docs.
+- The YARD docs title names this gem instead of an unrelated project.
+- Added a warning about AI contributions and an author section to the README.
+
 ## [0.1.3] - 2026-08-23
 
-- The zsh script now registers itself when sourced. `eval "$(mycli completion zsh)"`
-  previously ran the completion function outside a completion context, and zsh
-  answered with `_tags:comptags:36: can only be called from completion function`.
-  The script now calls itself when autoloaded from `$fpath` and calls `compdef`
-  when sourced, so both work.
-- The zsh function is named `_mycli` rather than `_mycli_completions`, matching
-  the name a `#compdef` file is autoloaded under. The bash function is unchanged.
+- The zsh script now registers itself when sourced. `eval "$(mycli completion zsh)"` previously ran the completion function outside a completion context, and zsh answered with `_tags:comptags:36: can only be called from completion function`. The script now calls itself when autoloaded from `$fpath` and calls `compdef` when sourced, so both work.
+- The zsh function is named `_mycli` rather than `_mycli_completions`, matching the name a `#compdef` file is autoloaded under. The bash function is unchanged.
 
 ## [0.1.2] - 2026-08-22
 

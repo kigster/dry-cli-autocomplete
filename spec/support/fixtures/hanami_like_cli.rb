@@ -6,7 +6,7 @@ module Fixtures
   # Modeled on the public command shape of Hanami's CLI (hanami/cli), a
   # dry-cli consumer this project did not write: version, a db group with
   # status and migrate, a generate group with a command-level alias, and
-  # a hidden console shortcut. SPECIFICATION.md §5 requires at least one
+  # a hidden console shortcut. docs/SPECIFICATION.md §5 requires at least one
   # fixture that did not originate with this project's own assumptions.
   module HanamiLikeCLI
     extend Dry::CLI::Registry

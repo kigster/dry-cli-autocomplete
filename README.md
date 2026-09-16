@@ -5,12 +5,11 @@
 Shell completion for [dry-cli](https://github.com/dry-rb/dry-cli) applications, with no Ruby in the TAB path.
 
 > [!NOTE]
-> For the original specification of this gem see [SPECIFICATION](SPECIFICATION.md)
+> For the original specification of this gem see [SPECIFICATION](docs/SPECIFICATION.md)
 
----
+______________________________________________________________________
 
 > [!WARNING]
->
 > This gem was written with a collaboration with Claude Code. Most of the ruby was written by a human (myself), reviewed and pushed to GitHub by Claude (anyone loves writing commit descriptions?). The part where Claude authored the most code is the ZSH autocompletion code as I'm less familiar with it than BASH. If you prefer not to use gems that had some AI contributions that were reviewed by a human, do not use this gem.
 
 Your CLI knows its own commands, options, aliases and enum values. The shell does not. This gem walks your registry once, prints a bash or zsh script, and you source it from your profile. Pressing TAB then spawns nothing and costs nothing, because every completion the script will ever offer is already inside it.
@@ -47,6 +46,28 @@ There is a dependency argument too. `completely` pulls `colsole`, `docopt_ng` an
 Given this registry:
 
 ```ruby
+class Version < Dry::CLI::Command
+  desc "Print the version"
+  option :format, values: %w[json plain], desc: "Output format"
+end
+
+class Deploy < Dry::CLI::Command
+  desc "Deploy the application"
+  option :force, type: :boolean, aliases: ["-f"], desc: "Skip confirmation"
+  argument :environment, values: %w[staging production], required: true, desc: "Target environment"
+end
+
+class DbStatus < Dry::CLI::Command
+  desc "Show pending migrations"
+  option :verbose, type: :boolean, desc: "Print full migration history"
+end
+
+class DbMigrate < Dry::CLI::Command
+  desc "Run pending migrations"
+  option :step, desc: "Migrate to a specific step"
+  argument :file, desc: "Migration file to run"
+end
+
 register "version", Version
 register "deploy", Deploy
 register "db", DbStatus do |prefix|
@@ -55,17 +76,23 @@ end
 register "secret", Secret, hidden: true
 ```
 
-`mycli completion bash` prints a `complete -F` function that dispatches on the command path:
+`mycli completion bash` prints a `complete -F` function. It walks `COMP_WORDS` to find the command path under the cursor, answers option values first, then offers that path's words:
 
 ```bash
 _mycli_completions() {
   # ...walks COMP_WORDS to find the current command path...
+
+  case "$path:$prev" in
+    "version:--format") COMPREPLY=($(compgen -W "json plain" -- "$cur")); return ;;
+  esac
+
   words=""
   case "$path" in
     "") words="version deploy db" ;;
     "version") words="--format" ;;
-    "deploy") words="--force -f" ;;
+    "deploy") words="--force -f staging production" ;;
     "db") words="migrate --verbose" ;;
+    "db migrate") words="--step" ;;
   esac
 
   COMPREPLY=($(compgen -W "$words" -- "$cur"))
@@ -76,16 +103,58 @@ _mycli_completions() {
 complete -F _mycli_completions mycli
 ```
 
-Read what that output proves. `db` offers `migrate` alongside its own `--verbose`, so a group with both a command and children keeps both. `db migrate` gets real file completion. `secret` is absent, because hidden commands stay hidden. The `-f` alias on `deploy` is there because you declared it.
+Read what that output proves:
 
-`mycli completion zsh` prints a native `#compdef` script built on `_arguments` and `_describe`, carrying each option's `desc` as help text next to it.
+- `db` offers `migrate` alongside its own `--verbose`, so a group with both a command and children keeps both.
+- `db migrate` gets real file completion.
+- `secret` is absent, because hidden commands stay hidden.
+- The `-f` alias on `deploy` is there because you declared it.
+- `mycli version --format <TAB>` offers `json plain`, and nothing else.
+- `mycli deploy <TAB>` offers `staging production`, the values declared on the positional.
 
-Enum values declared on an option or argument come through at no cost:
+The script uses no associative arrays, so it runs under the bash 3.2 that macOS ships as `/bin/bash`.
+
+`mycli completion zsh` prints a native `#compdef` script. Options go through `_arguments` with their `desc` as help text, subcommands go through `_describe` with the command's `desc`, declared values become a value list, and file arguments use `_files`:
+
+```zsh
+    ('deploy')
+      _arguments -s \
+        '--force[Skip confirmation]' \
+        '-f[Skip confirmation]' \
+        '*:Target environment:(staging production)' && ret=0
+      ;;
+    ('db')
+      _arguments -s \
+        '--verbose[Print full migration history]' && ret=0
+      commands=(
+        'migrate:Run pending migrations'
+      )
+      _describe -t commands 'db command' commands && ret=0
+      ;;
+```
+
+### Enum values
+
+Values declared on an option or argument come through at no cost:
 
 ```ruby
-option :format, values: %w[json yaml table]    # completes json yaml table
+option :format, values: %w[json yaml table]    # completes json yaml table after --format
 argument :component, values: %w[major minor]   # completes major minor
 ```
+
+### File arguments
+
+An argument completes file paths when it declares `file: true`. Without that key, the generator treats any argument whose name contains `file` or `path` as a file argument. Declare `file: false` to opt out of the guess:
+
+```ruby
+argument :output, file: true     # completes paths
+argument :path, file: false      # does not, despite the name
+argument :config_file            # completes paths, by name
+```
+
+### Program names
+
+Shell function names derive from the program name. A program installed as `my-tool` gets `_my_tool_completions` in bash and `_my_tool` in zsh.
 
 ## Installation
 
@@ -111,10 +180,24 @@ end
 
 That require pulls in the command class and nothing else. No emitter loads until someone actually runs `mycli completion`.
 
+The command reads the program name from `$PROGRAM_NAME` when it runs. If your executable can be invoked under a different name, such as through a wrapper or a binstub, pin it:
+
+```ruby
+register "completion", Dry::CLI::Autocomplete::Command[MyCLI, program_name: "mycli"]
+```
+
+The command takes one required argument, `bash` or `zsh`, and prints the script to standard output.
+
 Then have your users write the script once and source it. For bash:
 
 ```bash
 mycli completion bash > /usr/local/etc/bash_completion.d/mycli
+```
+
+Or evaluate it from `.bashrc`:
+
+```bash
+eval "$(mycli completion bash)"
 ```
 
 For zsh, put it anywhere on your `$fpath`:
@@ -123,7 +206,7 @@ For zsh, put it anywhere on your `$fpath`:
 mycli completion zsh > "${fpath[1]}/_mycli"
 ```
 
-Sourcing it from `.zshrc` works too, if you would rather not manage a file:
+Sourcing it from `.zshrc` works too, if you would rather not manage a file. Place the line after `compinit`, since the script calls `compdef` to register itself:
 
 ```bash
 eval "$(mycli completion zsh)"
@@ -161,14 +244,15 @@ The same table explains two other decisions. The generator will not be optimised
 
 ## Development
 
-Ruby 3.2 or newer. This repository uses rbenv, so activate it first:
+Ruby 4.0 or newer, matching the gemspec and CI. This repository uses rbenv, so activate it first:
 
 ```bash
 eval "$(rbenv init -)"
 bundle install
 bundle exec rspec       # the suite
 bundle exec rubocop     # the linter
-bundle exec rake        # both
+bundle exec rake        # the suite, and the default task
+bundle exec rake doc    # YARD documentation
 bin/console             # IRB with the gem loaded
 ```
 
@@ -176,7 +260,7 @@ Two conventions in the suite are worth knowing before you add to it. Fixtures in
 
 ## Author
 
-* Konstantin Gredeskoul pairing with Claude Code. Every line has been reviewed and co-written by a human. The commits were pushed by Claude to save time writing comment descriptions.
+- Konstantin Gredeskoul pairing with Claude Code. Every line has been reviewed and co-written by a human. The commits were pushed by Claude to save time writing comment descriptions.
 
 ## Contributing
 

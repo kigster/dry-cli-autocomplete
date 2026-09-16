@@ -13,7 +13,7 @@ module Dry
         # `_describe`, declared enum values become a `(a b c)` action, and a
         # file argument becomes `_files`. That per-option help is the thing
         # zsh users lose with a shim, and the reason this emitter exists.
-        # See SPECIFICATION.md §4.1.
+        # See docs/SPECIFICATION.md §4.1.
         #
         # Shares no code with the bash emitter by design: a fourth shell
         # should be a new class here, never another branch inside one of
@@ -193,7 +193,7 @@ module Dry
           def function_name = "_#{shell_identifier}"
 
           # A program installed as `my-tool` cannot name a shell function
-          # directly. See SPECIFICATION.md §4.2.
+          # directly. See docs/SPECIFICATION.md §4.2.
           def shell_identifier
             Dry::Inflector.new.underscore(spec.program_name.to_s).gsub(/[^A-Za-z0-9_]/, "_")
           end
