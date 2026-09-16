@@ -9,7 +9,7 @@ module Dry
       #
       # Touches nothing beyond the registry and the command classes it
       # already holds, so it stays cheap enough to run on every shell start.
-      # See SPECIFICATION.md §2.2 and §2.3.
+      # See docs/SPECIFICATION.md §2.2 and §2.3.
       class SpecBuilder
         # `::Data`, with the leading colons, and never a bare `Data`. This file
         # is lexically inside `module Dry`, so an unqualified constant is looked
@@ -31,7 +31,7 @@ module Dry
         ArgumentSpec = ::Data.define(:name, :values, :desc, :required, :file)
 
         # A bare heuristic, used only when a host does not declare `file:`
-        # explicitly on the argument. See SPECIFICATION.md §4.3.
+        # explicitly on the argument. See docs/SPECIFICATION.md §4.3.
         FILE_ARGUMENT_HEURISTIC = /file|path/i
 
         def self.call(registry, program_name:)

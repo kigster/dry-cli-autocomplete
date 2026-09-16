@@ -17,7 +17,7 @@ RSpec.describe Dry::CLI::Autocomplete::Command do
   end
 
   describe "the laziness contract" do
-    # SPECIFICATION.md §2.4 and acceptance criterion 3. Run in a clean
+    # docs/SPECIFICATION.md §2.4 and acceptance criterion 3. Run in a clean
     # process, because anything else in this suite has already loaded the
     # generator and would make the check pass for the wrong reason.
     it "loads no spec builder and no emitter when only the command is required" do

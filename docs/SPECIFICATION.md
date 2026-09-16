@@ -1,5 +1,8 @@
 # `dry-cli-autocomplete`: Specification
 
+> [!NOTE]
+> This is the specification for version 0.1.0. Later versions may differ; see `CHANGELOG.md` and `README.md` for current behaviour.
+
 Generate static shell completion scripts for any `Dry::CLI` application, from the command registry alone.
 
 The intended use is one line in a shell profile:

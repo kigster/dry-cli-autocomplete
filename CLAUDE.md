@@ -6,7 +6,7 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 A Ruby gem that generates static shell completion scripts for any `Dry::CLI` application. A host registers one command; `mycli completion bash` prints a script; the user evaluates it from a shell profile.
 
-**Read `SPECIFICATION.md` first.** It carries the design decisions, the measurements behind them, and the acceptance criteria. This file covers how to work in the repository; that one covers what to build and why.
+**Read `docs/SPECIFICATION.md` first.** It carries the design decisions, the measurements behind them, and the acceptance criteria. This file covers how to work in the repository; that one covers what to build and why.
 
 The gem is implemented and released (tags `v0.1.0` through `v0.1.3`). `README.md` documents the host-facing behaviour; keep it in step with `lib/` when behaviour changes.
 
@@ -61,8 +61,8 @@ Four pieces, and the boundary between the first and the rest is load-bearing.
 
 Two rules hold this shape together, both measured rather than assumed:
 
-- **The command shim loads no emitter.** A host pays nothing at boot for a command run once per shell. `SPECIFICATION.md` §2.4.
-- **The spec builder touches only the registry.** It must be safe to run at shell startup, because it runs at every shell startup. `SPECIFICATION.md` §2.2.
+- **The command shim loads no emitter.** A host pays nothing at boot for a command run once per shell. `docs/SPECIFICATION.md` §2.4.
+- **The spec builder touches only the registry.** It must be safe to run at shell startup, because it runs at every shell startup. `docs/SPECIFICATION.md` §2.2.
 
 `SpecBuilder` returns frozen `::Data` values: a `CompletionSpec` holding one `Node` per visible command or group, each with `OptionSpec` and `ArgumentSpec` entries. An argument is a file argument when it declares `file: true`, or, with no `file:` key, when its name matches `/file|path/i`.
 
@@ -70,9 +70,9 @@ The emitters take the same description and share no code. A fourth shell should 
 
 ## Conventions
 
-- **The generator is not a hot path.** It runs in 0.067ms against a 27-command registry. Do not optimise it, do not add native extensions, and do not cache anything. The reasoning is in `SPECIFICATION.md` §2.3.
+- **The generator is not a hot path.** It runs in 0.067ms against a 27-command registry. Do not optimise it, do not add native extensions, and do not cache anything. The reasoning is in `docs/SPECIFICATION.md` §2.3.
 - **Read a registry through its methods, not its ivars.** `registry.get(path)` returns a result exposing `command`, `children` and `names`. `instance_variable_get(:@node)` is what the gem this one replaces does, and it will break on a dry-cli release. Do not mistake this for a public API: in 1.4.1 `Registry#get`, all of `CommandRegistry`, every `LookupResult` reader and every `Node` reader carry `@api private`. There is no public way to enumerate a registry, so an upgrade can break the walk and the fixture suite is what catches it.
-- **Test against registries this project did not write.** A generator tested against one CLI encodes that CLI's shape. `SPECIFICATION.md` §5.
+- **Test against registries this project did not write.** A generator tested against one CLI encodes that CLI's shape. `docs/SPECIFICATION.md` §5.
 - **Validate generated shell with the shell.** `bash -n` and `zsh -n` parse without executing. A regex over generated output proves nothing about whether it runs. `spec/support/shell_helpers.rb` skips a missing shell locally and fails on CI.
 - **Emitter output is pinned by golden files** in `spec/support/golden/`. A deliberate output change means updating the golden file in the same commit.
 - **The bash emitter targets bash 3.2.** macOS ships it as `/bin/bash`, so no associative arrays.
@@ -84,7 +84,7 @@ The emitters take the same description and share no code. A fourth shell should 
 
 | Path                                  | What it is                                                                           |
 | ------------------------------------- | ------------------------------------------------------------------------------------ |
-| `SPECIFICATION.md`                    | What to build, why, and what "done" means                                            |
+| `docs/SPECIFICATION.md`               | What to build, why, and what "done" means                                            |
 | `README.md`                           | Host-facing documentation                                                            |
 | `CHANGELOG.md`                        | Release notes                                                                        |
 | `lib/dry/cli/autocomplete.rb`         | Entry point for `require "dry/cli/autocomplete"`. Hosts require `command.rb` instead |

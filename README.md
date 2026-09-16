@@ -5,7 +5,7 @@
 Shell completion for [dry-cli](https://github.com/dry-rb/dry-cli) applications, with no Ruby in the TAB path.
 
 > [!NOTE]
-> For the original specification of this gem see [SPECIFICATION](SPECIFICATION.md)
+> For the original specification of this gem see [SPECIFICATION](docs/SPECIFICATION.md)
 
 ______________________________________________________________________
 
