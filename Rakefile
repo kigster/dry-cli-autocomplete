@@ -29,7 +29,7 @@ end
 task build: :permissions
 
 YARD::Rake::YardocTask.new(:doc) do |t|
-  t.files = %w[lib/**/*.rb - README.md LICENSE.txt CHANGELOG.md docs/SPECIFICATION.md]
+  t.files = %w[lib/**/*.rb - README.md LICENSE.txt CHANGELOG.md]
   t.options.unshift("--title", '"dry-cli-autocomplete: shell completion for dry-cli"')
   t.after = -> { exec("open doc/index.html") } if RUBY_PLATFORM =~ /darwin/
 end
