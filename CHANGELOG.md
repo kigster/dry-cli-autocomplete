@@ -11,13 +11,8 @@ Documentation only; no change to the gem's behaviour.
 
 ## [0.1.3] - 2026-08-23
 
-- The zsh script now registers itself when sourced. `eval "$(mycli completion zsh)"`
-  previously ran the completion function outside a completion context, and zsh
-  answered with `_tags:comptags:36: can only be called from completion function`.
-  The script now calls itself when autoloaded from `$fpath` and calls `compdef`
-  when sourced, so both work.
-- The zsh function is named `_mycli` rather than `_mycli_completions`, matching
-  the name a `#compdef` file is autoloaded under. The bash function is unchanged.
+- The zsh script now registers itself when sourced. `eval "$(mycli completion zsh)"` previously ran the completion function outside a completion context, and zsh answered with `_tags:comptags:36: can only be called from completion function`. The script now calls itself when autoloaded from `$fpath` and calls `compdef` when sourced, so both work.
+- The zsh function is named `_mycli` rather than `_mycli_completions`, matching the name a `#compdef` file is autoloaded under. The bash function is unchanged.
 
 ## [0.1.2] - 2026-08-22
 
