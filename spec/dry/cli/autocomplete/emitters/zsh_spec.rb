@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "dry/cli/autocomplete/emitters/zsh"
+require "dry/cli/autocomplete/emitters/zsh_dynamic"
 require_relative "../../../../support/shell_helpers"
 require "tmpdir"
 
@@ -75,6 +76,17 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
 
   it "matches the golden script byte for byte" do
     expect(described_class.call(nested_spec)).to eq(golden("_mycli"))
+  end
+
+  it "matches the golden dynamic script byte for byte" do
+    out = Dry::CLI::Autocomplete::Emitters::ZshDynamic.call(nested_spec)
+    expect(out).to eq(golden("_mycli.dynamic"))
+  end
+
+  it "matches the golden hybrid script byte for byte" do
+    hybrid = described_class.call(nested_spec, fallback: Dry::CLI::Autocomplete::Emitters::ZshDynamic)
+
+    expect(hybrid).to eq(golden("_mycli.hybrid"))
   end
 
   it "produces a script zsh accepts" do

@@ -140,4 +140,10 @@ RSpec.describe Dry::CLI::Autocomplete::SpecBuilder do
       expect(node.arguments.find { |a| a.name == "path" }.file).to be false
     end
   end
+
+  it "walks a tree it is given in place of a registry" do
+    spec = described_class.call(Fixtures::SimpleCLI.tree, program_name: "mycli")
+
+    expect(spec.nodes.map(&:path)).to include(%w[db migrate])
+  end
 end

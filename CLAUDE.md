@@ -4,7 +4,7 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 ## What this is
 
-A Ruby gem that generates static shell completion scripts for any `Dry::CLI` application. A host registers one command; `mycli completion bash` prints a script; the user evaluates it from a shell profile.
+A Ruby gem that generates shell completion scripts for any `Dry::CLI` application: static by default, or dynamic and hybrid scripts that ask the program on a TAB. A host registers one command; `mycli completion bash` prints a script; the user evaluates it from a shell profile.
 
 **Read `docs/SPECIFICATION.md` first.** It carries the design decisions, the measurements behind them, and the acceptance criteria. This file covers how to work in the repository; that one covers what to build and why.
 
@@ -71,7 +71,8 @@ The emitters take the same description and share no code. A fourth shell should 
 ## Conventions
 
 - **The generator is not a hot path.** It runs in 0.067ms against a 27-command registry. Do not optimise it, do not add native extensions, and do not cache anything. The reasoning is in `docs/SPECIFICATION.md` §2.3.
-- **Read a registry through its methods, not its ivars.** `registry.get(path)` returns a result exposing `command`, `children` and `names`. `instance_variable_get(:@node)` is what the gem this one replaces does, and it will break on a dry-cli release. Do not mistake this for a public API: in 1.4.1 `Registry#get`, all of `CommandRegistry`, every `LookupResult` reader and every `Node` reader carry `@api private`. There is no public way to enumerate a registry, so an upgrade can break the walk and the fixture suite is what catches it.
+- **Read a registry through `Dry::CLI::Tree`, dry-cli's public view of it.** `registry.tree.walk(hidden: false)` for the static script, `tree.resolve(words)` for `__complete`. Never `registry.get`, `LookupResult` or `CommandRegistry::Node`: those are `@api private`.
+- **Static is the default mode.** Dynamic and hybrid run the program on a TAB, which is what the static script exists to avoid; they are opt-in.
 - **Test against registries this project did not write.** A generator tested against one CLI encodes that CLI's shape. `docs/SPECIFICATION.md` §5.
 - **Validate generated shell with the shell.** `bash -n` and `zsh -n` parse without executing. A regex over generated output proves nothing about whether it runs. `spec/support/shell_helpers.rb` skips a missing shell locally and fails on CI.
 - **Emitter output is pinned by golden files** in `spec/support/golden/`. A deliberate output change means updating the golden file in the same commit.

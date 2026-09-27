@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+- Reads the registry through `Dry::CLI::Tree`, dry-cli's public view of its commands, instead of `Registry#get`, `LookupResult` and `CommandRegistry::Node`, which are private. The static scripts are unchanged, byte for byte.
+- `Command[registry, mode:]` binds `:static` (the default), `:dynamic` or `:hybrid`, and `mycli completion bash --mode=dynamic` picks one at install time. A dynamic script asks the program on every TAB; a hybrid script is the static one, asking the program only when a word leaves what it knows. Both complete commands registered after the script was generated.
+- `Command[...]` registers a hidden `__complete` command, which prints the words that may come next on a command line.
+- The command writes to its public `stdout`, not a private `out`.
+- Needs dry-cli with `Dry::CLI::Tree`; the Gemfile takes it from kigster/dry-cli until it is released.
+
 ## [0.5.0] - 2026-09-16
 
 Documentation only; no change to the gem's behaviour.

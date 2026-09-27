@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "dry/cli/autocomplete/emitters/bash"
+require "dry/cli/autocomplete/emitters/bash_dynamic"
 require "open3"
 require "tempfile"
 require "tmpdir"
@@ -72,6 +73,17 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Bash do
 
   it "matches the golden script byte for byte" do
     expect(described_class.call(nested_spec)).to eq(golden("mycli.sh"))
+  end
+
+  it "matches the golden dynamic script byte for byte" do
+    out = Dry::CLI::Autocomplete::Emitters::BashDynamic.call(nested_spec)
+    expect(out).to eq(golden("mycli.dynamic.sh"))
+  end
+
+  it "matches the golden hybrid script byte for byte" do
+    hybrid = described_class.call(nested_spec, fallback: Dry::CLI::Autocomplete::Emitters::BashDynamic)
+
+    expect(hybrid).to eq(golden("mycli.hybrid.sh"))
   end
 
   it "produces a script bash accepts" do
