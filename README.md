@@ -186,7 +186,7 @@ The command reads the program name from `$PROGRAM_NAME` when it runs. If your ex
 register "completion", Dry::CLI::Autocomplete::Command[MyCLI, program_name: "mycli"]
 ```
 
-The command takes one required argument, `bash` or `zsh`, and prints the script to standard output.
+The command takes one required argument, `bash` or `zsh`, and prints the script to standard output. It also registers a hidden `__complete` command, which only the dynamic and hybrid scripts below call.
 
 Then have your users write the script once and source it. For bash:
 
@@ -216,7 +216,29 @@ The script tells the two apart and registers itself either way.
 
 Regenerate it when you add or rename commands. Nothing watches for changes, by design.
 
-## Why the script is static
+## Static, dynamic and hybrid scripts
+
+A static script, the default, carries every command, option and value in the script, so a TAB runs no Ruby at all. It knows only the commands registered when it was generated.
+
+When a CLI registers commands at runtime (from plugins, a config file, or an environment variable), bind a different mode, or let the user choose one with `--mode`:
+
+```ruby
+register "completion", Dry::CLI::Autocomplete::Command[MyCLI, mode: :hybrid]
+```
+
+```bash
+eval "$(mycli completion bash --mode=dynamic)"
+```
+
+| Mode      | The script                                  | On TAB                                                | Commands registered later |
+| --------- | ------------------------------------------- | ----------------------------------------------------- | ------------------------- |
+| `static`  | every command, option and value             | pure shell                                            | not until regenerated     |
+| `dynamic` | a small function                            | runs `mycli __complete -- <words>`                    | completed                 |
+| `hybrid`  | the static script, and the dynamic function | pure shell, until a word leaves what the script knows | completed                 |
+
+`__complete` prints the words that may come next, one per line, and `:files` when a file name may come next. It finds the command a line leads to by the same rules dry-cli uses to run one, through `Dry::CLI::Tree`, so it sees every command registered by the time it runs.
+
+## Why the script is static by default
 
 Cobra and clap route every TAB press to a hidden `__complete` subcommand. That is the right call for a Go or Rust binary that starts in 10ms. It is the wrong call here.
 
@@ -230,7 +252,7 @@ Cobra and clap route every TAB press to a hidden `__complete` subcommand. That i
 | **Registry walk and full completion spec build**          |    **0.067ms** |
 | Generated bash script for 27 commands                     | 257 lines, 9KB |
 
-Half a second of dead air per keystroke is unusable, and no amount of lazy loading gets under the host's own require cost. So there is no `__complete` command. It was considered, costed at roughly 90 lines, and rejected on that table.
+Half a second of dead air per keystroke is unusable, and no amount of lazy loading gets under the host's own require cost. So the default script never calls `__complete`. Dynamic mode pays that cost on every TAB, which is only worth it for a CLI that starts quickly or registers commands at runtime. Hybrid mode pays it only when the static table runs out.
 
 The same table explains two other decisions. The generator will not be optimised, because at 0.067ms it is 0.01% of the cheapest possible invocation and all the time goes to interpreter startup. Native extensions were rejected for the same reason, plus they would put a compiled artifact in every consumer's dependency chain.
 
@@ -240,7 +262,7 @@ The same table explains two other decisions. The generator will not be optimised
 
 **fish, PowerShell, nushell.** Worth adding later. The emitter interface is built so a fourth shell is a new class rather than a new branch in an existing one.
 
-**Watch your registry.** Regenerating is your call, in your release process.
+**Watch your registry.** Regenerating a static script is your call, in your release process. Dynamic and hybrid scripts ask the program instead.
 
 ## Development
 

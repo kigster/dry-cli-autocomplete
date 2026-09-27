@@ -17,12 +17,17 @@ module Dry
         # macOS still ships bash 3.2 as /bin/bash, and this script is
         # meant to be eval'd from exactly that.
         class Bash
-          def self.call(spec)
-            new(spec).call
+          # @param spec [SpecBuilder::CompletionSpec]
+          # @param fallback [Class, nil] in hybrid mode, the dynamic emitter
+          #   whose function answers what this script does not know
+          # @return [String]
+          def self.call(spec, fallback: nil)
+            new(spec, fallback:).call
           end
 
-          def initialize(spec)
+          def initialize(spec, fallback: nil)
             @spec = spec
+            @fallback = fallback
           end
 
           def call
@@ -31,16 +36,17 @@ module Dry
 
           private
 
-          attr_reader :spec
+          attr_reader :spec, :fallback
 
           def body
-            header_lines + path_walk_lines + option_value_lines + word_lookup_lines + footer_lines
+            fallback_helper_lines + header_lines + path_walk_lines + unknown_word_lines +
+              option_value_lines + word_lookup_lines + footer_lines
           end
 
           def header_lines
             [
               "#{function_name}() {",
-              "  local cur prev path word next_path words i",
+              "  local cur prev path word next_path words i#{' unknown' if fallback}",
               "  COMPREPLY=()",
               '  cur="${COMP_WORDS[COMP_CWORD]}"',
               '  prev=""',
@@ -70,6 +76,7 @@ module Dry
           def path_walk_close_lines
             [
               '    if [ -z "$next_path" ]; then',
+              *unknown_detection_lines,
               "      break",
               "    fi",
               '    path="$next_path"',
@@ -89,12 +96,60 @@ module Dry
             [
               '  COMPREPLY=($(compgen -W "$words" -- "$cur"))',
               *file_completion_lines,
+              *empty_fallback_lines,
               "}",
               "complete -F #{function_name} #{spec.program_name}"
             ]
           end
 
           def function_name = "_#{shell_identifier}_completions"
+
+          # Hybrid mode only, from here to {#empty_fallback_lines}: the
+          # dynamic emitter's function, defined ahead of this one.
+          def fallback_helper_lines
+            fallback ? [*fallback.helper_lines(spec), ""] : []
+          end
+
+          # A word this script does not know, where a subcommand could go, may
+          # be a command registered after the script was generated.
+          def unknown_detection_lines
+            return [] unless fallback && group_paths.any?
+
+            [
+              '      case "$word" in',
+              "        -*) ;;",
+              "        *)",
+              '          case "$path" in',
+              "            #{group_pattern}) unknown=1 ;;",
+              "          esac",
+              "          ;;",
+              "      esac"
+            ]
+          end
+
+          # Such a word hands the whole line to the program.
+          def unknown_word_lines
+            return [] unless fallback
+
+            ['  if [ -n "$unknown" ]; then', "    #{fallback.function_name(spec)}", "    return", "  fi", ""]
+          end
+
+          # So does a word that matches nothing the script knows.
+          def empty_fallback_lines
+            return [] unless fallback
+
+            ['  if [ "${#COMPREPLY[@]}" -eq 0 ]; then', "    #{fallback.function_name(spec)}", "  fi"]
+          end
+
+          # A case pattern matching every path in {#group_paths}.
+          def group_pattern
+            group_paths.map { |key| %("#{quote(key)}") }.join(" | ")
+          end
+
+          # The paths of every node that has subcommands.
+          def group_paths
+            spec.nodes.reject { it.children.empty? }.map { path_key(it.path) }
+          end
 
           # A program installed as `my-tool` cannot name a shell function
           # directly. See docs/SPECIFICATION.md §4.2.

@@ -3,12 +3,13 @@
 module Dry
   class CLI
     module Autocomplete
-      # Walks a Dry::CLI registry through its public API and returns a
-      # shell-agnostic description of every completion: one CompletionSpec
-      # carrying one Node per reachable, non-hidden command or group.
+      # Walks a Dry::CLI command tree and returns a shell-agnostic
+      # description of every completion: one CompletionSpec carrying one Node
+      # per reachable, non-hidden command or group.
       #
-      # Touches nothing beyond the registry and the command classes it
-      # already holds, so it stays cheap enough to run on every shell start.
+      # Reads the registry only through `Dry::CLI::Tree`, dry-cli's public view
+      # of it, so it stays cheap enough to run on every shell start and does
+      # not break when dry-cli changes how it stores commands.
       # See docs/SPECIFICATION.md §2.2 and §2.3.
       class SpecBuilder
         # `::Data`, with the leading colons, and never a bare `Data`. This file
@@ -34,65 +35,56 @@ module Dry
         # explicitly on the argument. See docs/SPECIFICATION.md §4.3.
         FILE_ARGUMENT_HEURISTIC = /file|path/i
 
+        # @param registry [Dry::CLI::Registry, Dry::CLI::Tree::Node] a registry, or the tree to walk
+        # @param program_name [String]
+        # @return [CompletionSpec]
         def self.call(registry, program_name:)
           new(registry, program_name).call
         end
 
+        # @param registry [Dry::CLI::Registry, Dry::CLI::Tree::Node]
+        # @param program_name [String]
         def initialize(registry, program_name)
-          @registry = registry
+          @tree = registry.respond_to?(:tree) ? registry.tree : registry
           @program_name = program_name
         end
 
+        # @return [CompletionSpec]
         def call
-          CompletionSpec.new(program_name: program_name, nodes: walk([]))
+          CompletionSpec.new(program_name: program_name, nodes: tree.walk(hidden: false).map { build_node(it) })
         end
 
         private
 
-        attr_reader :registry, :program_name
+        attr_reader :tree, :program_name
 
-        def walk(path, nodes = [])
-          result = registry.get(path)
-          visible = visible_children(result)
-
-          nodes << build_node(path, result, visible)
-          visible.each_key { |name| walk(path + [name], nodes) }
-          nodes
-        end
-
-        def visible_children(result)
-          result.children.reject { |_name, node| node.hidden }
-        end
-
-        def build_node(path, result, visible)
-          command = result.command
-
+        def build_node(node)
           Node.new(
-            path: path,
-            desc: command&.description,
-            options: command ? command.options.map { |option| build_option(option) } : [],
-            arguments: command ? command.arguments.map { |argument| build_argument(argument) } : [],
-            children: visible.keys
+            path: node.path,
+            desc: node.description,
+            options: node.options.map { |option| build_option(option) },
+            arguments: node.arguments.map { |argument| build_argument(argument) },
+            children: node.children(hidden: false).map(&:name)
           )
         end
 
         def build_option(option)
           OptionSpec.new(
             name: option.name.to_s, type: option.type, values: option.values,
-            aliases: option.aliases, default: option.default, desc: option.options[:desc],
-            required: option.required? || false, boolean: option.boolean?, array: option.array?
+            aliases: option.aliases, default: option.default, desc: option.desc,
+            required: option.required?, boolean: option.boolean?, array: option.array?
           )
         end
 
         def build_argument(argument)
           ArgumentSpec.new(
-            name: argument.name.to_s, values: argument.values, desc: argument.options[:desc],
-            required: argument.required? || false, file: file_argument?(argument)
+            name: argument.name.to_s, values: argument.values, desc: argument.desc,
+            required: argument.required?, file: file_argument?(argument)
           )
         end
 
         def file_argument?(argument)
-          explicit = argument.options[:file]
+          explicit = argument.metadata[:file]
           return !!explicit unless explicit.nil?
 
           argument.name.to_s.match?(FILE_ARGUMENT_HEURISTIC)
