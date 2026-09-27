@@ -51,6 +51,11 @@ module Dry
           out.puts emitter_for(shell).call(spec)
         end
 
+        # Dry::CLI sets @out from Dry::CLI#call(out:) before it calls a command,
+        # and only when the command has not set @out itself, so never assign it
+        # here. $stdout is for a command called directly, outside Dry::CLI.
+        def out = @out || $stdout
+
         private
 
         def registry
@@ -65,9 +70,6 @@ module Dry
         def emitter_for(shell)
           Emitters.const_get(shell.capitalize)
         end
-
-        # Overridable so specs can capture output without reaching for $stdout.
-        def out = $stdout
       end
     end
   end

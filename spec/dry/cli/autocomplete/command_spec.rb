@@ -88,6 +88,28 @@ RSpec.describe Dry::CLI::Autocomplete::Command do
     end
   end
 
+  describe "the output stream" do
+    # Dry::CLI#call(out:) is how a host's launcher, and an in-process Aruba
+    # run, hands every command the stream to write to.
+    it "writes to the stream Dry::CLI was called with, not to $stdout" do
+      io = StringIO.new
+      original = $stdout
+      $stdout = StringIO.new
+
+      Dry::CLI.new(described_class[Fixtures::SimpleCLI, program_name: "mycli"])
+              .call(arguments: ["zsh"], out: io)
+
+      expect(io.string).to start_with("#compdef mycli")
+      expect($stdout.string).to be_empty
+    ensure
+      $stdout = original
+    end
+
+    it "falls back to $stdout when called directly, outside Dry::CLI" do
+      expect(capture("zsh")).to start_with("#compdef mycli")
+    end
+  end
+
   describe "the program name" do
     it "uses the one it was bound with" do
       expect(capture("bash")).to include("complete -F _mycli_completions mycli")
