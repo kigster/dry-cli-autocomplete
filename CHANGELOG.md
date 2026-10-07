@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- `completion` now writes to the stream a host passes to `Dry::CLI#call(out:)`. It used to write to `$stdout` regardless, so a launcher's own STDOUT, and an in-process Aruba run, received nothing. Called directly, outside `Dry::CLI`, it still falls back to `$stdout`.
+
 ## [0.5.0] - 2026-09-16
 
 Documentation only; no change to the gem's behaviour.
