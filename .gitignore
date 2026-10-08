@@ -33,3 +33,4 @@ lib/tax_engine/vendored_revision.rb
 # corpus — see 016's spec, which decided exactly this point.
 spec/fixtures/returns/*-tax-return-*.txt
 **/.standard.yml
+**/.idea
