@@ -68,6 +68,17 @@ RSpec.describe Dry::CLI::Autocomplete::Command do
       expect(described_class.registry).to be_nil
     end
 
+    # dry-cli resets both on every subclass, and binding builds one, so a
+    # host's `mycli --help` would list `completion` with no description.
+    describe "the bound command" do
+      subject(:bound) { described_class[Fixtures::SimpleCLI] }
+
+      its(:description) { is_expected.to eq(described_class.description) }
+      its(:description) { is_expected.not_to be_nil }
+      its(:examples) { is_expected.to eq(described_class.examples) }
+      its(:examples) { is_expected.not_to be_empty }
+    end
+
     it "refuses to run unbound rather than generating an empty script" do
       expect { described_class.new.call(shell: "bash") }
         .to raise_error(ArgumentError, /no registry bound/)

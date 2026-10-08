@@ -21,11 +21,19 @@ module Dry
         # $PROGRAM_NAME at call time rather than at registration, since a
         # gem may be required long before anyone knows how it was invoked.
         #
+        # dry-cli's inherited hook resets a subclass's description and
+        # examples, though it keeps arguments and options, so both are
+        # declared again here. Without that, `mycli --help` would list
+        # `completion` with nothing beside it.
+        #
         #   register "completion", Dry::CLI::Autocomplete::Command[MyCLI]
         def self.[](registry, program_name: nil)
+          base = self
           Class.new(self) do
             @registry = registry
             @program_name = program_name
+            desc base.description
+            example base.examples
           end
         end
 
@@ -35,8 +43,7 @@ module Dry
 
         desc "Print a shell completion script"
 
-        argument :shell, required: true, values: SHELLS,
-                         desc: "Shell to generate completions for"
+        argument :shell, required: true, values: SHELLS, desc: "Shell to generate completions for"
 
         example [
           "bash > /usr/local/etc/bash_completion.d/#{File.basename($PROGRAM_NAME)}",
@@ -47,7 +54,8 @@ module Dry
           require_relative "spec_builder"
           require_relative "emitters/#{shell}"
 
-          spec = SpecBuilder.call(registry, program_name: program_name)
+          spec = SpecBuilder.call(registry, program_name:)
+
           out.puts emitter_for(shell).call(spec)
         end
 
