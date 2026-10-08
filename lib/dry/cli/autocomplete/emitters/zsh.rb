@@ -133,8 +133,23 @@ module Dry
           # the grouped form needs its description outside the quotes, and
           # one entry per flag is easier to read in the generated file.
           def option_specs(option)
-            names = ["--#{option.name}"] + Array(option.aliases)
-            names.map { |name| single_quote("#{name}#{bracketed(option.desc)}#{option_action(option)}") }
+            option_flags(option).map do |name|
+              single_quote("#{name}#{bracketed(option.desc)}#{option_action(option)}")
+            end
+          end
+
+          # Spelled the way dry-cli's parser spells them, so TAB offers exactly
+          # what the command accepts: `as_of` is `--as-of`, a boolean also
+          # takes `--no-`, and an alias gains the dashes a host may leave off.
+          def option_flags(option)
+            long = Dry::Inflector.new.dasherize(option.name.to_s)
+            longs = option.boolean ? ["--#{long}", "--no-#{long}"] : ["--#{long}"]
+            longs + Array(option.aliases).map { |name| alias_flag(name) }
+          end
+
+          def alias_flag(name)
+            bare = name.to_s.sub(/\A-{1,2}/, "")
+            bare.size == 1 ? "-#{bare}" : "--#{bare}"
           end
 
           # A boolean flag takes no value. Anything else gets one field

@@ -131,7 +131,19 @@ module Dry
               node.arguments.flat_map { |argument| Array(argument.values) }
           end
 
-          def option_words(option) = ["--#{option.name}"] + Array(option.aliases)
+          # Spelled the way dry-cli's parser spells them, so TAB offers exactly
+          # what the command accepts: `as_of` is `--as-of`, a boolean also
+          # takes `--no-`, and an alias gains the dashes a host may leave off.
+          def option_words(option)
+            long = Dry::Inflector.new.dasherize(option.name.to_s)
+            longs = option.boolean ? ["--#{long}", "--no-#{long}"] : ["--#{long}"]
+            longs + Array(option.aliases).map { |name| alias_flag(name) }
+          end
+
+          def alias_flag(name)
+            bare = name.to_s.sub(/\A-{1,2}/, "")
+            bare.size == 1 ? "-#{bare}" : "--#{bare}"
+          end
 
           # An option that declares values gets its own arm, keyed on the word
           # before the cursor. Typing `--format ` then TAB should offer what

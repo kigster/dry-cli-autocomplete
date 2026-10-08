@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Options complete the way dry-cli parses them. `option :as_of` completed as `--as_of`, which dry-cli accepts but its own help never shows; it is now `--as-of`. A boolean also completes its `--no-` form, and an alias declared without dashes (`aliases: ["f"]`) gains them (`-f`).
 - `completion` now writes to the stream a host passes to `Dry::CLI#call(out:)`. It used to write to `$stdout` regardless, so a launcher's own STDOUT, and an in-process Aruba run, received nothing. Called directly, outside `Dry::CLI`, it still falls back to `$stdout`.
 
 ## [0.5.0] - 2026-09-16

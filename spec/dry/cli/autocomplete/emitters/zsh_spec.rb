@@ -104,6 +104,45 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
     expect(described_class.call(nested_spec)).to include("'--format[Output format]:format:(json plain)'")
   end
 
+  describe "spelling options the way dry-cli parses them" do
+    let(:spelled) do
+      described_class.call(
+        ZshFixtures::CompletionSpec.new(
+          program_name: "mycli",
+          nodes: [
+            ZshFixtures::Node.new(path: [], desc: nil, options: [], arguments: [], children: %w[run]),
+            ZshFixtures::Node.new(
+              path: ["run"], desc: "Run it", arguments: [], children: [],
+              options: [
+                ZshFixtures.option(name: "as_of", desc: "As of", aliases: ["a"], values: %w[today]),
+                ZshFixtures.option(name: "dry_run", desc: "Preview", aliases: ["--preview"], boolean: true)
+              ]
+            )
+          ]
+        )
+      )
+    end
+
+    it "dasherizes an underscored name, and keeps the declared name as the value's message" do
+      expect(spelled).to include("'--as-of[As of]:as_of:(today)'")
+      expect(spelled).not_to include("--as_of", "--dry_run")
+    end
+
+    it "offers the --no- form of a boolean, taking no value" do
+      expect(spelled).to include("'--dry-run[Preview]'", "'--no-dry-run[Preview]'")
+      expect(spelled).not_to include("--no-as-of")
+    end
+
+    it "adds the dashes an alias was declared without" do
+      expect(spelled).to include("'-a[As of]:as_of:(today)'", "'--preview[Preview]'")
+    end
+
+    it "produces a script zsh accepts" do
+      accepted, stderr = zsh_accepts?(spelled)
+      expect(accepted).to be(true), stderr
+    end
+  end
+
   it "describes subcommands with their own descriptions" do
     expect(described_class.call(nested_spec)).to include("'migrate:Run pending migrations'")
   end

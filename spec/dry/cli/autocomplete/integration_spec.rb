@@ -69,6 +69,19 @@ RSpec.describe "generating completions end to end" do
     end
   end
 
+  # dry-cli parses `option :save_dev` as --save-dev, and a boolean also as
+  # --no-save-dev. Completion has to offer that spelling, not the Ruby name.
+  describe "option names, through SpecBuilder from a real registry" do
+    it "offers what dry-cli's parser accepts, in both shells" do
+      %w[bash zsh].each do |shell|
+        script = generate(Fixtures::PackageManagerCLI, shell)
+
+        expect(script).to include("--save-dev", "--no-save-dev"), "#{shell} missed a dashed flag"
+        expect(script).not_to include("--save_dev"), "#{shell} offered the Ruby name"
+      end
+    end
+  end
+
   describe "a host that registers the command the documented way" do
     # Mirrors the README and spec.md §2.4 exactly, including Command[self]
     # from inside the registry's own module body.
