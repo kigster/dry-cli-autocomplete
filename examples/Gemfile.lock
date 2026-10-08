@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    dry-cli-autocomplete (0.5.0)
+    dry-cli-autocomplete (0.6.0)
       dry-cli (>= 1.0)
       dry-inflector (>= 1.0)
 
@@ -53,7 +53,7 @@ GEM
     cucumber-tag-expressions (8.1.0)
     diff-lcs (1.6.2)
     dry-cli (1.4.1)
-    dry-cli-help (0.5.1)
+    dry-cli-help (0.6.0)
       dry-cli
       pastel (~> 0.8)
     dry-cli-ui (0.6.1)
@@ -206,8 +206,8 @@ CHECKSUMS
   cucumber-tag-expressions (8.1.0) sha256=9bd8c4b6654f8e5bf2a9c99329b6f32136a75e50cd39d4cfb3927d0fa9f52e21
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
   dry-cli (1.4.1) sha256=b8015bb76c708aa8705a36faf694973e75eeeffca39b89c8e172dc6f66a7d874
-  dry-cli-autocomplete (0.5.0)
-  dry-cli-help (0.5.1) sha256=b08a09bed8c36d9ab4c60f20bd17aeefc5615c4cca41e64e1bcc5845a55e83b5
+  dry-cli-autocomplete (0.6.0)
+  dry-cli-help (0.6.0) sha256=10def4049bdae8c19e7412f3cefc062829048dbfa3a42155788b333c381766c9
   dry-cli-ui (0.6.1) sha256=d3f0885b284d8d268abb17d34b45c274be19dde0f84a143a9600c2cd574be72d
   dry-inflector (1.3.1) sha256=7fb0c2bb04f67638f25c52e7ba39ab435d922a3a5c3cd196120f63accb682dcc
   erb (6.0.7) sha256=c5ca6dc25b0ef974a44dc8f59fe847577122483b1968a38dec305c60bf91ee92
