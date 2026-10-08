@@ -25,9 +25,19 @@ module Dry
         # method Struct defines and Data does not.
         CompletionSpec = ::Data.define(:program_name, :nodes)
         Node = ::Data.define(:path, :desc, :options, :arguments, :children)
+        # `long`, `negation` and `alias_flags` are spelled the way dry-cli
+        # 1.4.1 spells them in Option#parser_options and #alias_names, so
+        # both emitters offer exactly what the parser accepts. `flag` is a
+        # `type: :flag` option: like a boolean it takes no value, but dry-cli
+        # gives it no `--no-` form.
         OptionSpec = ::Data.define(
-          :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array
-        )
+          :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array,
+          :flag, :long, :negation, :alias_flags
+        ) do
+          # @return [Array<String>] every spelling: the long name, its `--no-`
+          #   form for a boolean, then the aliases
+          def flags = [long, negation, *alias_flags].compact
+        end
         ArgumentSpec = ::Data.define(:name, :values, :desc, :required, :file)
 
         # A bare heuristic, used only when a host does not declare `file:`
@@ -77,11 +87,27 @@ module Dry
         end
 
         def build_option(option)
+          long = "--#{dasherize(option.name)}"
           OptionSpec.new(
             name: option.name.to_s, type: option.type, values: option.values,
             aliases: option.aliases, default: option.default, desc: option.options[:desc],
-            required: option.required? || false, boolean: option.boolean?, array: option.array?
+            required: option.required? || false, boolean: option.boolean?, array: option.array?,
+            flag: option.respond_to?(:flag?) && option.flag?, long: long,
+            negation: option.boolean? ? long.sub("--", "--no-") : nil,
+            alias_flags: Array(option.aliases).map { |name| alias_flag(name) }.uniq
           )
+        end
+
+        # What Dry::CLI::Inflector.dasherize does, without depending on a
+        # module dry-cli marks private: `dry_run` becomes `--dry-run` and `dryRun`
+        # becomes `--dryrun`, as dry-cli registers them.
+        def dasherize(name) = name.to_s.downcase.gsub(/[[:space:]_]/, "-")
+
+        # One letter gets one dash and anything longer two, whatever the host
+        # wrote: `"f"`, `"-f"` and `"--f"` all register as `-f`.
+        def alias_flag(name)
+          bare = name.to_s.sub(/\A-{1,2}/, "")
+          bare.size == 1 ? "-#{bare}" : "--#{bare}"
         end
 
         def build_argument(argument)

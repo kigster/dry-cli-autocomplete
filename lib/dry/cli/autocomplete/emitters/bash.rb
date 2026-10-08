@@ -127,22 +127,8 @@ module Dry
           # legitimate next words at this point in the line.
           def node_words(node)
             node.children +
-              node.options.flat_map { |option| option_words(option) } +
+              node.options.flat_map(&:flags) +
               node.arguments.flat_map { |argument| Array(argument.values) }
-          end
-
-          # Spelled the way dry-cli's parser spells them, so TAB offers exactly
-          # what the command accepts: `as_of` is `--as-of`, a boolean also
-          # takes `--no-`, and an alias gains the dashes a host may leave off.
-          def option_words(option)
-            long = Dry::Inflector.new.dasherize(option.name.to_s)
-            longs = option.boolean ? ["--#{long}", "--no-#{long}"] : ["--#{long}"]
-            longs + Array(option.aliases).map { |name| alias_flag(name) }
-          end
-
-          def alias_flag(name)
-            bare = name.to_s.sub(/\A-{1,2}/, "")
-            bare.size == 1 ? "-#{bare}" : "--#{bare}"
           end
 
           # An option that declares values gets its own arm, keyed on the word
@@ -157,7 +143,7 @@ module Dry
                 next if values.empty?
 
                 key = path_key(node.path)
-                option_words(option).map do |name|
+                option.flags.map do |name|
                   "    \"#{quote(key)}:#{quote(name)}\") " \
                     "COMPREPLY=($(compgen -W \"#{quote(values.join(' '))}\" -- \"$cur\")); return ;;"
                 end

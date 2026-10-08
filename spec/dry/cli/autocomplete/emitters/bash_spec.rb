@@ -18,14 +18,26 @@ module BashFixtures
   # the interface contract fixes for emitters.
   OptionSpec = Struct.new(
     :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array,
+    :flag, :long, :negation, :alias_flags,
     keyword_init: true
-  )
+  ) do
+    def flags = [long, negation, *alias_flags].compact
+  end
   ArgumentSpec = Struct.new(:name, :values, :desc, :required, :file, keyword_init: true)
-  def self.option(name:, aliases: [], boolean: false, values: nil)
+  def self.option(name:, aliases: [], boolean: false, flag: false, values: nil)
+    long = "--#{name.tr('_', '-')}"
     OptionSpec.new(
       name: name, type: boolean ? "bool" : "string", values: values, aliases: aliases,
-      default: nil, desc: "#{name} option", required: false, boolean: boolean, array: false
+      default: nil, desc: "#{name} option", required: false, boolean: boolean, array: false,
+      flag: flag, long: long, negation: boolean ? long.sub("--", "--no-") : nil,
+      alias_flags: aliases.map { |alias_name| flag(alias_name) }
     )
+  end
+
+  # The spelling SpecBuilder gives an alias, so a fixture reads like its output.
+  def self.flag(name)
+    bare = name.sub(/\A-{1,2}/, "")
+    bare.size == 1 ? "-#{bare}" : "--#{bare}"
   end
 
   def self.argument(name:, file: false, values: nil)

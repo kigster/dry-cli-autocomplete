@@ -15,14 +15,26 @@ module ZshFixtures
   # the interface contract fixes for emitters.
   OptionSpec = Struct.new(
     :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array,
+    :flag, :long, :negation, :alias_flags,
     keyword_init: true
-  )
+  ) do
+    def flags = [long, negation, *alias_flags].compact
+  end
   ArgumentSpec = Struct.new(:name, :values, :desc, :required, :file, keyword_init: true)
-  def self.option(name:, desc: nil, aliases: [], boolean: false, values: nil)
+  def self.option(name:, desc: nil, aliases: [], boolean: false, flag: false, values: nil)
+    long = "--#{name.tr('_', '-')}"
     OptionSpec.new(
       name: name, type: boolean ? "bool" : "string", values: values, aliases: aliases,
-      default: nil, desc: desc || "#{name} option", required: false, boolean: boolean, array: false
+      default: nil, desc: desc || "#{name} option", required: false, boolean: boolean, array: false,
+      flag: flag, long: long, negation: boolean ? long.sub("--", "--no-") : nil,
+      alias_flags: aliases.map { |alias_name| flag(alias_name) }
     )
+  end
+
+  # The spelling SpecBuilder gives an alias, so a fixture reads like its output.
+  def self.flag(name)
+    bare = name.sub(/\A-{1,2}/, "")
+    bare.size == 1 ? "-#{bare}" : "--#{bare}"
   end
 
   def self.argument(name:, desc: nil, file: false, values: nil)
@@ -115,7 +127,8 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
               path: ["run"], desc: "Run it", arguments: [], children: [],
               options: [
                 ZshFixtures.option(name: "as_of", desc: "As of", aliases: ["a"], values: %w[today]),
-                ZshFixtures.option(name: "dry_run", desc: "Preview", aliases: ["--preview"], boolean: true)
+                ZshFixtures.option(name: "dry_run", desc: "Preview", aliases: ["--preview"], boolean: true),
+                ZshFixtures.option(name: "quiet", desc: "Quiet", flag: true)
               ]
             )
           ]
@@ -131,6 +144,11 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
     it "offers the --no- form of a boolean, taking no value" do
       expect(spelled).to include("'--dry-run[Preview]'", "'--no-dry-run[Preview]'")
       expect(spelled).not_to include("--no-as-of")
+    end
+
+    it "gives a type: :flag option neither a value slot nor a --no- form" do
+      expect(spelled).to include("'--quiet[Quiet]'")
+      expect(spelled).not_to include("--quiet[Quiet]:", "--no-quiet")
     end
 
     it "adds the dashes an alias was declared without" do
@@ -275,7 +293,8 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
             # a missing one is exactly what this case is about.
             options: [ZshFixtures::OptionSpec.new(
               name: "quiet", type: "bool", values: nil, aliases: [], default: nil,
-              desc: nil, required: false, boolean: true, array: false
+              desc: nil, required: false, boolean: true, array: false,
+              flag: false, long: "--quiet", negation: "--no-quiet", alias_flags: []
             )],
             arguments: [ZshFixtures::ArgumentSpec.new(
               name: "target", values: %w[one two], desc: nil, required: true, file: false
