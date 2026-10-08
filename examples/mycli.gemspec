@@ -1,22 +1,22 @@
 # frozen_string_literal: true
 
-require_relative "lib/dry/cli/autocomplete/version"
+require_relative "lib/mycli/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "dry-cli-autocomplete"
-  spec.version = Dry::CLI::Autocomplete::VERSION
-  spec.authors = ["Konstantin Gredeskoul"]
-  spec.email = ["kigster@gmail.com"]
+  spec.name = "mycli"
+  spec.version = MyCLI::VERSION
+  spec.authors = ["Your Name"]
+  spec.email = ["your@email.com"]
 
-  spec.summary = "A missing auto-complete addition for dry-cli powered Ruby CLI tools for BASH & ZSH"
-  spec.description = "Supports auto-completion for dry-cli powered Ruby CLI tools, including sub-commands, in BASH and ZSH."
-  spec.homepage = "https://github.com/kigster/dry-cli-autocomplete"
+  spec.summary = "An example dry-cli application: downloads URLs and scans networks for hosts, several at once"
+  spec.description = "Shows dry-cli-autocomplete, dry-cli-help and dry-cli-ui working together in one command line tool."
+  spec.homepage = "https://github.com/YOU/mycli"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 4.0"
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/kigster/dry-cli-autocomplete"
-  spec.metadata["changelog_uri"] = "https://github.com/kigster/dry-cli-autocomplete/blob/main/CHANGELOG.md"
+  spec.metadata["source_code_uri"] = "https://github.com/YOU/mycli"
+  spec.metadata["changelog_uri"] = "https://github.com/YOU/mycli/blob/main/CHANGELOG.md"
 
   # Uncomment the line below to require MFA for gem pushes.
   # This helps protect your gem from supply chain attacks by ensuring
@@ -35,6 +35,10 @@ Gem::Specification.new do |spec|
   end
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "concurrent-ruby", ">= 1.3"
   spec.add_dependency "dry-cli", ">= 1.0"
-  spec.add_dependency "dry-inflector", ">= 1.0"
+  spec.add_dependency "dry-cli-autocomplete", ">= 0.5"
+  spec.add_dependency "dry-cli-help", ">= 0.5"
+  spec.add_dependency "dry-cli-ui", ">= 0.6"
+  spec.add_dependency "zeitwerk", ">= 2.6"
 end
