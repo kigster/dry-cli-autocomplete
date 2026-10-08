@@ -68,6 +68,22 @@ RSpec.describe Dry::CLI::Autocomplete::Command do
       expect(described_class.registry).to be_nil
     end
 
+    it "keeps the description dry-cli empties on every subclass" do
+      expect(described_class[Fixtures::SimpleCLI].description).to eq("Print a shell completion script")
+    end
+
+    it "names the bound program in its examples, once each" do
+      expect(described_class[Fixtures::SimpleCLI, program_name: "mycli"].examples).to eq(
+        ["bash > /usr/local/etc/bash_completion.d/mycli", "zsh  > \"${fpath[1]}/_mycli\""]
+      )
+    end
+
+    it "leaves the base class's examples alone" do
+      described_class[Fixtures::SimpleCLI, program_name: "mycli"]
+
+      expect(described_class.examples.join).not_to include("mycli")
+    end
+
     it "refuses to run unbound rather than generating an empty script" do
       expect { described_class.new.call(shell: "bash") }
         .to raise_error(ArgumentError, /no registry bound/)
