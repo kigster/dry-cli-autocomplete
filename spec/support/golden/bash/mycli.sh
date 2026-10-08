@@ -32,8 +32,8 @@ _mycli_completions() {
   case "$path" in
     "") words="version deploy db" ;;
     "version") words="--format" ;;
-    "deploy") words="--force -f staging production" ;;
-    "db") words="migrate --verbose -v" ;;
+    "deploy") words="--force --no-force -f staging production" ;;
+    "db") words="migrate --verbose --no-verbose -v" ;;
   esac
 
   COMPREPLY=($(compgen -W "$words" -- "$cur"))

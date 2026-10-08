@@ -18,14 +18,26 @@ module BashFixtures
   # the interface contract fixes for emitters.
   OptionSpec = Struct.new(
     :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array,
+    :flag, :long, :negation, :alias_flags,
     keyword_init: true
-  )
+  ) do
+    def flags = [long, negation, *alias_flags].compact
+  end
   ArgumentSpec = Struct.new(:name, :values, :desc, :required, :file, keyword_init: true)
-  def self.option(name:, aliases: [], boolean: false, values: nil)
+  def self.option(name:, aliases: [], boolean: false, flag: false, values: nil)
+    long = "--#{name.tr('_', '-')}"
     OptionSpec.new(
       name: name, type: boolean ? "bool" : "string", values: values, aliases: aliases,
-      default: nil, desc: "#{name} option", required: false, boolean: boolean, array: false
+      default: nil, desc: "#{name} option", required: false, boolean: boolean, array: false,
+      flag: flag, long: long, negation: boolean ? long.sub("--", "--no-") : nil,
+      alias_flags: aliases.map { |alias_name| flag(alias_name) }
     )
+  end
+
+  # The spelling SpecBuilder gives an alias, so a fixture reads like its output.
+  def self.flag(name)
+    bare = name.sub(/\A-{1,2}/, "")
+    bare.size == 1 ? "-#{bare}" : "--#{bare}"
   end
 
   def self.argument(name:, file: false, values: nil)
@@ -126,7 +138,7 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Bash do
     end
 
     it "completes a group's own options alongside its children" do
-      expect(complete(nested_spec, "mycli", "db", "")).to contain_exactly("migrate", "--verbose", "-v")
+      expect(complete(nested_spec, "mycli", "db", "")).to contain_exactly("migrate", "--verbose", "--no-verbose", "-v")
     end
 
     it "completes an option's long name and its alias" do
@@ -177,7 +189,46 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Bash do
 
     it "falls through to the word list after a boolean flag, which takes no value" do
       expect(complete(nested_spec, "mycli", "deploy", "--force", ""))
-        .to contain_exactly("--force", "-f", "staging", "production")
+        .to contain_exactly("--force", "--no-force", "-f", "staging", "production")
+    end
+
+    describe "spelling options the way dry-cli parses them" do
+      let(:spelled_spec) do
+        BashFixtures::CompletionSpec.new(
+          program_name: "mycli",
+          nodes: [
+            BashFixtures::Node.new(path: [], options: [], arguments: [], children: %w[run]),
+            BashFixtures::Node.new(
+              path: ["run"], arguments: [], children: [],
+              options: [
+                BashFixtures.option(name: "as_of", aliases: ["a"], values: %w[today]),
+                BashFixtures.option(name: "dry_run", aliases: ["--preview"], boolean: true)
+              ]
+            )
+          ]
+        )
+      end
+
+      it "dasherizes an underscored name, as dry-cli's parser does" do
+        expect(complete(spelled_spec, "mycli", "run", "--")).to include("--as-of", "--dry-run")
+      end
+
+      it "never offers the underscored spelling" do
+        expect(described_class.call(spelled_spec)).not_to include("--as_of", "--dry_run")
+      end
+
+      it "offers the --no- form of a boolean, and not of a valued option" do
+        expect(complete(spelled_spec, "mycli", "run", "--no")).to contain_exactly("--no-dry-run")
+      end
+
+      it "adds the dashes an alias was declared without" do
+        expect(complete(spelled_spec, "mycli", "run", "")).to include("-a", "--preview")
+      end
+
+      it "answers a dasherized option's values, and its bare alias's" do
+        expect(complete(spelled_spec, "mycli", "run", "--as-of", "")).to contain_exactly("today")
+        expect(complete(spelled_spec, "mycli", "run", "-a", "")).to contain_exactly("today")
+      end
     end
 
     it "offers a positional's declared values at that position" do

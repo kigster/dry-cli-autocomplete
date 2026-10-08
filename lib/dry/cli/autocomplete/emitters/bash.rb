@@ -127,11 +127,9 @@ module Dry
           # legitimate next words at this point in the line.
           def node_words(node)
             node.children +
-              node.options.flat_map { |option| option_words(option) } +
+              node.options.flat_map(&:flags) +
               node.arguments.flat_map { |argument| Array(argument.values) }
           end
-
-          def option_words(option) = ["--#{option.name}"] + Array(option.aliases)
 
           # An option that declares values gets its own arm, keyed on the word
           # before the cursor. Typing `--format ` then TAB should offer what
@@ -145,7 +143,7 @@ module Dry
                 next if values.empty?
 
                 key = path_key(node.path)
-                option_words(option).map do |name|
+                option.flags.map do |name|
                   "    \"#{quote(key)}:#{quote(name)}\") " \
                     "COMPREPLY=($(compgen -W \"#{quote(values.join(' '))}\" -- \"$cur\")); return ;;"
                 end

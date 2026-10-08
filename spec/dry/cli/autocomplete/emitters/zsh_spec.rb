@@ -15,14 +15,26 @@ module ZshFixtures
   # the interface contract fixes for emitters.
   OptionSpec = Struct.new(
     :name, :type, :values, :aliases, :default, :desc, :required, :boolean, :array,
+    :flag, :long, :negation, :alias_flags,
     keyword_init: true
-  )
+  ) do
+    def flags = [long, negation, *alias_flags].compact
+  end
   ArgumentSpec = Struct.new(:name, :values, :desc, :required, :file, keyword_init: true)
-  def self.option(name:, desc: nil, aliases: [], boolean: false, values: nil)
+  def self.option(name:, desc: nil, aliases: [], boolean: false, flag: false, values: nil)
+    long = "--#{name.tr('_', '-')}"
     OptionSpec.new(
       name: name, type: boolean ? "bool" : "string", values: values, aliases: aliases,
-      default: nil, desc: desc || "#{name} option", required: false, boolean: boolean, array: false
+      default: nil, desc: desc || "#{name} option", required: false, boolean: boolean, array: false,
+      flag: flag, long: long, negation: boolean ? long.sub("--", "--no-") : nil,
+      alias_flags: aliases.map { |alias_name| flag(alias_name) }
     )
+  end
+
+  # The spelling SpecBuilder gives an alias, so a fixture reads like its output.
+  def self.flag(name)
+    bare = name.sub(/\A-{1,2}/, "")
+    bare.size == 1 ? "-#{bare}" : "--#{bare}"
   end
 
   def self.argument(name:, desc: nil, file: false, values: nil)
@@ -93,15 +105,60 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
   end
 
   it "carries each option's description as zsh help text" do
-    expect(described_class.call(nested_spec)).to include("'--force[Skip confirmation]'")
+    expect(described_class.call(nested_spec)).to include("'(--no-force)--force[Skip confirmation]'")
   end
 
   it "gives an option alias its own spec, with the same description" do
-    expect(described_class.call(nested_spec)).to include("'-f[Skip confirmation]'")
+    expect(described_class.call(nested_spec)).to include("'(--no-force)-f[Skip confirmation]'")
   end
 
   it "completes an option's declared values" do
     expect(described_class.call(nested_spec)).to include("'--format[Output format]:format:(json plain)'")
+  end
+
+  describe "spelling options the way dry-cli parses them" do
+    let(:spelled) do
+      described_class.call(
+        ZshFixtures::CompletionSpec.new(
+          program_name: "mycli",
+          nodes: [
+            ZshFixtures::Node.new(path: [], desc: nil, options: [], arguments: [], children: %w[run]),
+            ZshFixtures::Node.new(
+              path: ["run"], desc: "Run it", arguments: [], children: [],
+              options: [
+                ZshFixtures.option(name: "as_of", desc: "As of", aliases: ["a"], values: %w[today]),
+                ZshFixtures.option(name: "dry_run", desc: "Preview", aliases: ["--preview"], boolean: true),
+                ZshFixtures.option(name: "quiet", desc: "Quiet", flag: true)
+              ]
+            )
+          ]
+        )
+      )
+    end
+
+    it "dasherizes an underscored name, and keeps the declared name as the value's message" do
+      expect(spelled).to include("'--as-of[As of]:as_of:(today)'")
+      expect(spelled).not_to include("--as_of", "--dry_run")
+    end
+
+    it "offers the --no- form of a boolean, taking no value" do
+      expect(spelled).to include("'(--no-dry-run)--dry-run[Preview]'", "'(--dry-run --preview)--no-dry-run[Turn off --dry-run]'")
+      expect(spelled).not_to include("--no-as-of")
+    end
+
+    it "gives a type: :flag option neither a value slot nor a --no- form" do
+      expect(spelled).to include("'--quiet[Quiet]'")
+      expect(spelled).not_to include("--quiet[Quiet]:", "--no-quiet")
+    end
+
+    it "adds the dashes an alias was declared without" do
+      expect(spelled).to include("'-a[As of]:as_of:(today)'", "'(--no-dry-run)--preview[Preview]'")
+    end
+
+    it "produces a script zsh accepts" do
+      accepted, stderr = zsh_accepts?(spelled)
+      expect(accepted).to be(true), stderr
+    end
   end
 
   it "describes subcommands with their own descriptions" do
@@ -236,7 +293,8 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
             # a missing one is exactly what this case is about.
             options: [ZshFixtures::OptionSpec.new(
               name: "quiet", type: "bool", values: nil, aliases: [], default: nil,
-              desc: nil, required: false, boolean: true, array: false
+              desc: nil, required: false, boolean: true, array: false,
+              flag: false, long: "--quiet", negation: "--no-quiet", alias_flags: []
             )],
             arguments: [ZshFixtures::ArgumentSpec.new(
               name: "target", values: %w[one two], desc: nil, required: true, file: false
@@ -247,7 +305,7 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
     end
 
     it "emits a bare option with no empty bracket pair" do
-      expect(described_class.call(undescribed_spec)).to include("'--quiet'")
+      expect(described_class.call(undescribed_spec)).to include("'(--no-quiet)--quiet'")
     end
 
     it "falls back to the argument's name as the message zsh shows" do
