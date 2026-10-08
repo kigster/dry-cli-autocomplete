@@ -37,3 +37,25 @@ jobs:
           bundler-cache: true
       - name: Run the default task
         run: bundle exec rake
+
+  # examples/ is its own bundle: it loads this gem from ../ and adds the
+  # gems mycli needs. Its suite stubs the network, so it needs nothing else.
+  example:
+    runs-on: ubuntu-latest
+    name: examples/ on Ruby 4.0.6
+    defaults:
+      run:
+        working-directory: examples
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '4.0.6'
+          bundler-cache: true
+          working-directory: examples
+      - name: Run the example suite
+        run: bundle exec rspec
