@@ -105,11 +105,11 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
   end
 
   it "carries each option's description as zsh help text" do
-    expect(described_class.call(nested_spec)).to include("'--force[Skip confirmation]'")
+    expect(described_class.call(nested_spec)).to include("'(--no-force)--force[Skip confirmation]'")
   end
 
   it "gives an option alias its own spec, with the same description" do
-    expect(described_class.call(nested_spec)).to include("'-f[Skip confirmation]'")
+    expect(described_class.call(nested_spec)).to include("'(--no-force)-f[Skip confirmation]'")
   end
 
   it "completes an option's declared values" do
@@ -142,7 +142,7 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
     end
 
     it "offers the --no- form of a boolean, taking no value" do
-      expect(spelled).to include("'--dry-run[Preview]'", "'--no-dry-run[Preview]'")
+      expect(spelled).to include("'(--no-dry-run)--dry-run[Preview]'", "'(--dry-run --preview)--no-dry-run[Turn off --dry-run]'")
       expect(spelled).not_to include("--no-as-of")
     end
 
@@ -152,7 +152,7 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
     end
 
     it "adds the dashes an alias was declared without" do
-      expect(spelled).to include("'-a[As of]:as_of:(today)'", "'--preview[Preview]'")
+      expect(spelled).to include("'-a[As of]:as_of:(today)'", "'(--no-dry-run)--preview[Preview]'")
     end
 
     it "produces a script zsh accepts" do
@@ -305,7 +305,7 @@ RSpec.describe Dry::CLI::Autocomplete::Emitters::Zsh do
     end
 
     it "emits a bare option with no empty bracket pair" do
-      expect(described_class.call(undescribed_spec)).to include("'--quiet'")
+      expect(described_class.call(undescribed_spec)).to include("'(--no-quiet)--quiet'")
     end
 
     it "falls back to the argument's name as the message zsh shows" do

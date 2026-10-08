@@ -132,10 +132,26 @@ module Dry
           # Each alias gets its own spec rather than a {-f,--force} group:
           # the grouped form needs its description outside the quotes, and
           # one entry per flag is easier to read in the generated file.
+          #
+          # A boolean's two forms exclude each other, so once `--force` is on
+          # the line zsh stops offering `--no-force`, and the reverse. The
+          # `--no-` form says what it turns off rather than repeating the
+          # description, which would read backwards.
           def option_specs(option)
-            option.flags.map do |name|
-              single_quote("#{name}#{bracketed(option.desc)}#{option_action(option)}")
+            positives = [option.long, *option.alias_flags]
+            specs = positives.map do |name|
+              single_quote("#{exclusion([option.negation])}#{name}#{bracketed(option.desc)}#{option_action(option)}")
             end
+            return specs unless option.negation
+
+            specs.insert(1, single_quote("#{exclusion(positives)}#{option.negation}[Turn off #{option.long}]"))
+          end
+
+          # A zsh exclusion list such as `(--no-force)`, or nothing when there
+          # is nothing to exclude.
+          def exclusion(names)
+            names = names.compact
+            names.empty? ? "" : "(#{names.join(' ')})"
           end
 
           # A boolean or a `type: :flag` option takes no value: dry-cli parses

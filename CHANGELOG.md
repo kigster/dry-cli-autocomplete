@@ -2,6 +2,7 @@
 
 - Options complete the way dry-cli parses them. `option :as_of` completed as `--as_of`, which dry-cli accepts but its own help never shows; it is now `--as-of`. A boolean also completes its `--no-` form, and an alias declared without dashes (`aliases: ["f"]`) gains them (`-f`). A name with capitals is downcased as dry-cli registers it: `option :dryRun` completes as `--dryrun`.
 - In zsh, a `type: :flag` option no longer takes a value. `run --quiet x` completed `x` as `--quiet`'s argument, while dry-cli parses it as `quiet: true` and an argument `x`.
+- In zsh, a boolean's two forms exclude each other, so once `--force` is on the line zsh stops offering `--no-force`. The `--no-` form is described as `Turn off --force` rather than repeating the description, which read backwards.
 - `Command[MyCLI]` keeps its description and examples. dry-cli empties both on every subclass, so `mycli completion --help` printed usage alone. The examples now name the bound `program_name:`.
 - `completion` now writes to the stream a host passes to `Dry::CLI#call(out:)`. It used to write to `$stdout` regardless, so a launcher's own STDOUT, and an in-process Aruba run, received nothing. Called directly, outside `Dry::CLI`, it still falls back to `$stdout`.
 
