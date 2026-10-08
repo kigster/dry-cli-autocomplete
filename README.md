@@ -144,8 +144,8 @@ _mycli_completions() {
   case "$path" in
     "") words="version deploy db" ;;
     "version") words="--format" ;;
-    "deploy") words="--force -f staging production" ;;
-    "db") words="migrate --verbose" ;;
+    "deploy") words="--force --no-force -f staging production" ;;
+    "db") words="migrate --verbose --no-verbose" ;;
     "db migrate") words="--step" ;;
   esac
 
@@ -163,6 +163,7 @@ Read what that output proves:
 - `db migrate` gets real file completion.
 - `secret` is absent, because hidden commands stay hidden.
 - The `-f` alias on `deploy` is there because you declared it.
+- `--no-force` is there because `--force` is a boolean, and dry-cli accepts both forms. Options are spelled the way dry-cli parses them, so `option :dry_run` completes as `--dry-run`, and an alias declared as `"f"` completes as `-f`.
 - `mycli version --format <TAB>` offers `json plain`, and nothing else.
 - `mycli deploy <TAB>` offers `staging production`, the values declared on the positional.
 
@@ -174,12 +175,14 @@ The script uses no associative arrays, so it runs under the bash 3.2 that macOS 
     ('deploy')
       _arguments -s \
         '--force[Skip confirmation]' \
+        '--no-force[Skip confirmation]' \
         '-f[Skip confirmation]' \
         '*:Target environment:(staging production)' && ret=0
       ;;
     ('db')
       _arguments -s \
-        '--verbose[Print full migration history]' && ret=0
+        '--verbose[Print full migration history]' \
+        '--no-verbose[Print full migration history]' && ret=0
       commands=(
         'migrate:Run pending migrations'
       )

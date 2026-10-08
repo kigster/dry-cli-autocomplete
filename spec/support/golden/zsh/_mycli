@@ -34,13 +34,15 @@ _mycli() {
       ;;
     ('deploy')
       _arguments -s \
-        '--force[Skip confirmation]' \
-        '-f[Skip confirmation]' \
+        '(--no-force)--force[Skip confirmation]' \
+        '(--force -f)--no-force[Turn off --force]' \
+        '(--no-force)-f[Skip confirmation]' \
         '*:Target environment:(staging production)' && ret=0
       ;;
     ('db')
       _arguments -s \
-        '--verbose[Print full history]' && ret=0
+        '(--no-verbose)--verbose[Print full history]' \
+        '(--verbose)--no-verbose[Turn off --verbose]' && ret=0
       commands=(
         'migrate:Run pending migrations'
       )

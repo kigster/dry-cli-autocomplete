@@ -68,15 +68,20 @@ RSpec.describe Dry::CLI::Autocomplete::Command do
       expect(described_class.registry).to be_nil
     end
 
-    # dry-cli resets both on every subclass, and binding builds one, so a
-    # host's `mycli --help` would list `completion` with no description.
-    describe "the bound command" do
-      subject(:bound) { described_class[Fixtures::SimpleCLI] }
+    it "keeps the description dry-cli empties on every subclass" do
+      expect(described_class[Fixtures::SimpleCLI].description).to eq("Print a shell completion script")
+    end
 
-      its(:description) { is_expected.to eq(described_class.description) }
-      its(:description) { is_expected.not_to be_nil }
-      its(:examples) { is_expected.to eq(described_class.examples) }
-      its(:examples) { is_expected.not_to be_empty }
+    it "names the bound program in its examples, once each" do
+      expect(described_class[Fixtures::SimpleCLI, program_name: "mycli"].examples).to eq(
+        ["bash > /usr/local/etc/bash_completion.d/mycli", "zsh  > \"${fpath[1]}/_mycli\""]
+      )
+    end
+
+    it "leaves the base class's examples alone" do
+      described_class[Fixtures::SimpleCLI, program_name: "mycli"]
+
+      expect(described_class.examples.join).not_to include("mycli")
     end
 
     it "refuses to run unbound rather than generating an empty script" do

@@ -140,4 +140,30 @@ RSpec.describe Dry::CLI::Autocomplete::SpecBuilder do
       expect(node.arguments.find { |a| a.name == "path" }.file).to be false
     end
   end
+
+  describe "spelling options the way dry-cli parses them" do
+    subject(:options) do
+      command_class = Class.new(Dry::CLI::Command) do
+        option :as_of, aliases: ["a"], desc: "As of"
+        option :dryRun, type: :boolean, aliases: ["--preview", "-p", "p"]
+        option :quiet, type: :flag, aliases: ["q"]
+
+        def call(**); end
+      end
+      registry = Module.new { extend Dry::CLI::Registry }
+      registry.register("run", command_class)
+
+      described_class.call(registry, program_name: "mycli").nodes.find { |n| n.path == ["run"] }.options
+    end
+
+    def option(name) = options.find { |o| o.name == name }
+
+    it("dasherizes an underscored name") { expect(option("as_of").flags).to eq(%w[--as-of -a]) }
+    it("downcases, as dry-cli registers it") { expect(option("dryRun").long).to eq("--dryrun") }
+    it("gives a boolean its --no- form") { expect(option("dryRun").negation).to eq("--no-dryrun") }
+    it("adds the dashes an alias lacks, once") { expect(option("dryRun").alias_flags).to eq(%w[--preview -p]) }
+    it("gives a valued option no --no- form") { expect(option("as_of").negation).to be_nil }
+    it("marks a type: :flag option, which takes no value") { expect(option("quiet")).to have_attributes(flag: true, boolean: false) }
+    it("gives a type: :flag option no --no- form") { expect(option("quiet").flags).to eq(%w[--quiet -q]) }
+  end
 end

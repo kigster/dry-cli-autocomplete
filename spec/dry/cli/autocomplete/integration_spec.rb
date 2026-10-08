@@ -69,6 +69,19 @@ RSpec.describe "generating completions end to end" do
     end
   end
 
+  # dry-cli parses `option :save_dev` as --save-dev, and a boolean also as
+  # --no-save-dev. Completion has to offer that spelling, not the Ruby name.
+  describe "option names, through SpecBuilder from a real registry" do
+    it "offers what dry-cli's parser accepts, in both shells" do
+      %w[bash zsh].each do |shell|
+        script = generate(Fixtures::PackageManagerCLI, shell)
+
+        expect(script).to include("--save-dev", "--no-save-dev"), "#{shell} missed a dashed flag"
+        expect(script).not_to include("--save_dev"), "#{shell} offered the Ruby name"
+      end
+    end
+  end
+
   describe "a host that registers the command the documented way" do
     # Mirrors the README and spec.md §2.4 exactly, including Command[self]
     # from inside the registry's own module body.
@@ -105,6 +118,29 @@ RSpec.describe "generating completions end to end" do
 
     it "completes the host's own commands" do
       expect(run_cli("completion", "bash")).to include("build")
+    end
+
+    def help_for_completion
+      io = StringIO.new
+      original = $stdout
+      $stdout = io
+      Dry::CLI.new(HostCLI).call(arguments: ["completion", "--help"])
+      io.string
+    rescue SystemExit
+      io.string
+    ensure
+      $stdout = original
+    end
+
+    # dry-cli's inherited hook empties a subclass's description and examples,
+    # and Command[] returns a subclass, so its help used to print usage alone.
+    it "keeps the command's description in the host's help" do
+      expect(help_for_completion).to include("Print a shell completion script")
+    end
+
+    it "shows examples naming the program it was bound to" do
+      expect(help_for_completion).to include("completion bash > /usr/local/etc/bash_completion.d/hostcli")
+        .and include("_hostcli")
     end
 
     it "completes the completion command's own shell argument values" do
