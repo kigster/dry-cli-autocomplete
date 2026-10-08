@@ -1,0 +1,47 @@
+# frozen_string_literal: true
+
+ENV["RUBYOPT"] = "-W0"
+
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+
+require "rspec/its"
+require "timeout"
+
+if ARGV.empty?
+  require "simplecov"
+  require "coverage/badge"
+
+  SimpleCov.start do
+    enable_coverage :branch
+    track_files "lib/**/*.rb"
+    add_filter "/spec/"
+    self.formatters = SimpleCov::Formatter::MultiFormatter.new(
+      [
+        SimpleCov::Formatter::HTMLFormatter,
+        Coverage::Badge::Formatter
+      ]
+    )
+  end
+
+  SimpleCov.at_exit do
+    SimpleCov.result.format!
+    puts "Coverage: #{SimpleCov.result.covered_percent.round(2)}%"
+    FileUtils.mkdir_p("docs/img")
+    FileUtils.mv("coverage/badge.svg", "docs/img/badge.svg")
+  end
+end
+
+require "mycli"
+require "webmock/rspec"
+
+Dir[File.join(__dir__, "support/**/*.rb")].each { |file| require file }
+
+PROJECT_ROOT = File.expand_path("..", __dir__)
+FIXTURES_ROOT = File.join(PROJECT_ROOT, "spec", "support", "fixtures")
+
+RSpec.configure do |config|
+  config.disable_monkey_patching!
+  config.expect_with :rspec do |expectations|
+    expectations.syntax = :expect
+  end
+end

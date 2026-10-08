@@ -12,6 +12,60 @@ ______________________________________________________________________
 > [!WARNING]
 > This gem was written with a collaboration with Claude Code. Most of the ruby was written by a human (myself), reviewed and pushed to GitHub by Claude (anyone loves writing commit descriptions?). The part where Claude authored the most code is the ZSH autocompletion code as I'm less familiar with it than BASH. If you prefer not to use gems that had some AI contributions that were reviewed by a human, do not use this gem.
 
+## Usage
+
+For the impatient:
+
+```bash
+gem install dry-cli dry-cli-autocomplete -N
+```
+
+Register one command:
+
+```ruby
+require "dry/cli"
+require "dry/cli/autocomplete/command"
+
+module MyCLI
+  extend Dry::CLI::Registry
+
+  register "deploy", Deploy
+  register "completion", Dry::CLI::Autocomplete::Command[MyCLI]
+end
+```
+
+Then load the script from your shell's initialization file:
+
+```bash
+eval "$(mycli completion bash)"   # ~/.bashrc
+eval "$(mycli completion zsh)"    # ~/.zshrc, after compinit
+```
+
+### Real Example
+
+[`examples/`](examples/README.md) holds a working CLI with the command registered, to try it end to end.
+
+```bash
+$ cd examples && bundle exec bin/mycli -h
+mycli
+
+Downloads URLs and finds hosts on the local network, several at once.
+
+USAGE
+  mycli COMMAND [OPTIONS]
+
+COMMANDS
+  version, v               Print version
+  download-urls, download  Download URLs, each to its own file
+  find-hosts, hosts        Find hosts on the local network that listen on
+                           common TCP ports
+  completion               Print a shell completion script
+
+OPTIONS
+  -h, --help               Show help
+  -v, --version            Print version
+```
+
 Your CLI knows its own commands, options, aliases and enum values. The shell does not. This gem walks your registry once, prints a bash or zsh script, and you source it from your profile. Pressing TAB then spawns nothing and costs nothing, because every completion the script will ever offer is already inside it.
 
 ```bash

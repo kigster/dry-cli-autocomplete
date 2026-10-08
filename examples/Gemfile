@@ -1,0 +1,23 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gem "concurrent-ruby"
+gem "dry-cli"
+gem "dry-cli-help"
+gem "dry-cli-ui"
+gem "yard"
+gem "zeitwerk"
+# The gem in this repository, so the example shows the completion it
+# generates today rather than the last release.
+gem "dry-cli-autocomplete", path: "../"
+
+group :test do
+  gem "aruba"
+  gem "coverage-badge"
+  gem "rake"
+  gem "rspec"
+  gem "rspec-its"
+  gem "simplecov"
+  gem "webmock"
+end

@@ -49,8 +49,7 @@ module Dry
 
         desc "Print a shell completion script"
 
-        argument :shell, required: true, values: SHELLS,
-                         desc: "Shell to generate completions for"
+        argument :shell, required: true, values: SHELLS, desc: "Shell to generate completions for"
 
         example examples_for(File.basename($PROGRAM_NAME))
 
@@ -58,7 +57,8 @@ module Dry
           require_relative "spec_builder"
           require_relative "emitters/#{shell}"
 
-          spec = SpecBuilder.call(registry, program_name: program_name)
+          spec = SpecBuilder.call(registry, program_name:)
+
           out.puts emitter_for(shell).call(spec)
         end
 
