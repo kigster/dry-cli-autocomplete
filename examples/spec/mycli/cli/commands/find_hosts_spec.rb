@@ -7,11 +7,13 @@ RSpec.describe MyCLI::CLI::Commands::FindHosts do
 
   let(:subnet) { described_class::Subnet.around("10.0.0.5") }
   let(:answering) { { "10.0.0.1" => :open, "10.0.0.7" => :closed } }
+  let(:names) { {} }
 
   before do
     allow(described_class::Subnet).to receive(:local).and_return(subnet)
     allow(described_class::FileLimit).to receive(:allow)
     allow(described_class::PortProbe).to receive(:call) { |ip, _port, _timeout| answering.fetch(ip, :silent) }
+    allow(described_class::HostName).to receive(:call) { |ip| names[ip] }
   end
 
   it { expect(described_class.description).to eq("Find hosts on the local network that listen on common TCP ports") }
@@ -24,6 +26,15 @@ RSpec.describe MyCLI::CLI::Commands::FindHosts do
     it { expect(out.string).to include("Found 2 hosts", "10.0.0.1: 22", "10.0.0.7: no open ports") }
     it("raises the open file limit for the sockets") { expect(described_class::FileLimit).to have_received(:allow).with(50) }
     it { expect(exit_status).to eq(0) }
+  end
+
+  context "with hosts that have names" do
+    let(:names) { { "10.0.0.7" => "printer.local" } }
+
+    before { run_command("--ports", "22", "--concurrency", "50") }
+
+    it { expect(out.string).to include("10.0.0.1: 22", "10.0.0.7 (printer.local): no open ports") }
+    it("looks up only the hosts that answered") { expect(described_class::HostName).to have_received(:call).twice }
   end
 
   context "with several --ports" do

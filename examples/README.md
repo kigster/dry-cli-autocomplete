@@ -62,7 +62,7 @@ Then `mycli <TAB>` offers the commands, `mycli find-hosts --p<TAB>` offers `--po
 - `download-urls URL1 URL2 ...` downloads each URL to its own file in the current folder, under a progress bar per URL.
 - `download-urls -u urls.txt` reads the URLs from `urls.txt`, one per line, skipping blank lines and `#` comments. URLs given as arguments are downloaded too. Invalid URLs, from either place, are skipped and listed in a warning before the downloads start.
 - `download-urls --spinner --output=downloads URL1 URL2 ...` shows a spinner per URL instead, and saves the files in `downloads/`, creating it when missing.
-- `find-hosts` probes every address on the local /24 network on the common TCP ports, 10 addresses at a time, under two bars: one counts the addresses that answered, the other those that did not. It ends with a box listing each host that answered and its open ports.
+- `find-hosts` probes every address on the local /24 network on the common TCP ports, 10 addresses at a time, under two bars: one counts the addresses that answered, the other those that did not. It ends with a box listing each host that answered, its name when the resolver knows one (mDNS included), and its open ports.
 - `find-hosts --spinner --output=hosts.txt` shows a spinner per address instead, and also writes the result to `hosts.txt`.
 - `find-hosts --ports=22,80` probes only ports 22 and 80. `find-hosts --list` prints the common ports and what usually listens on each.
 - `find-hosts --cidr=172.16.0.0/23` scans that network instead of the local one. A network of more than 1024 addresses is refused unless `--unlimited` (`-u`) is given.
@@ -87,16 +87,16 @@ A file keeps the extension its URL path has. Without one, the extension comes fr
 
 `bin/mycli` puts `lib/` on the load path and calls `MyCLI::Launcher`. Zeitwerk loads the rest from `lib/`, one constant per file:
 
-| Path                                           | What it does                                                                                              |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `lib/mycli/launcher.rb`                        | Runs the CLI with the streams it is given, and turns the outcome into an exit status                      |
-| `lib/mycli/cli/help_settings.rb`               | The dry-cli-help settings                                                                                 |
-| `lib/mycli/cli/commands.rb`                    | The registry: every command's name and aliases, and the `completion` command                              |
-| `lib/mycli/cli/commands/base.rb`               | What every command inherits: `ui` on the command's own streams, and `error!`                              |
-| `lib/mycli/cli/commands/concurrent_command.rb` | The parent of commands that run work concurrently: `--progress`, `--spinner`, `--concurrency`             |
-| `lib/mycli/cli/commands/*.rb`                  | A command each, plus the `Concurrency` and `DisplayOptions` mixins                                        |
-| `lib/mycli/cli/commands/download_urls/`        | `UrlList`, `FileName`, `Downloader` and `HTTP`, and the two displays                                      |
-| `lib/mycli/cli/commands/find_hosts/`           | `Subnet` (on `IPAddr`), `Scanner`, `PortProbe`, `FileLimit`, `WorkerPool`, `Report`, and the two displays |
+| Path                                           | What it does                                                                                                          |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `lib/mycli/launcher.rb`                        | Runs the CLI with the streams it is given, and turns the outcome into an exit status                                  |
+| `lib/mycli/cli/help_settings.rb`               | The dry-cli-help settings                                                                                             |
+| `lib/mycli/cli/commands.rb`                    | The registry: every command's name and aliases, and the `completion` command                                          |
+| `lib/mycli/cli/commands/base.rb`               | What every command inherits: `ui` on the command's own streams, and `error!`                                          |
+| `lib/mycli/cli/commands/concurrent_command.rb` | The parent of commands that run work concurrently: `--progress`, `--spinner`, `--concurrency`                         |
+| `lib/mycli/cli/commands/*.rb`                  | A command each, plus the `Concurrency` and `DisplayOptions` mixins                                                    |
+| `lib/mycli/cli/commands/download_urls/`        | `UrlList`, `FileName`, `Downloader` and `HTTP`, and the two displays                                                  |
+| `lib/mycli/cli/commands/find_hosts/`           | `Subnet` (on `IPAddr`), `Scanner`, `PortProbe`, `HostName`, `FileLimit`, `WorkerPool`, `Report`, and the two displays |
 
 A command reads its options and reports the outcome. The code that does its work lives under the command's own namespace, beside `ProgressDisplay` and `SpinnerDisplay`, which share an interface. Neither the work nor the display reads the command line.
 

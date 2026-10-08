@@ -84,12 +84,22 @@ module MyCLI
 
         # Ctrl-C lets the addresses being probed finish, and probes no more.
         #
-        # @return [Report]
+        # @return [Report] with the name of each host that has one
         def scan(subnet, scanner, display, concurrency)
-          ui.stoppable do |stop|
+          report = ui.stoppable do |stop|
             results = display.new(ui:, scanner:, concurrency:, stop:).call(subnet.addresses)
             Report.new(addresses: subnet.addresses, results:, stopped: stop.stopped?)
           end
+          report.with(names: names(report.hosts.map(&:first), concurrency))
+        end
+
+        # A lookup can wait seconds for an answer, so they run concurrently.
+        #
+        # @param ips [Array<String>] the hosts that answered
+        # @param concurrency [Integer]
+        # @return [Hash{String => String}] the name of each host that has one
+        def names(ips, concurrency)
+          ips.zip(WorkerPool.new(concurrency).map(ips) { |ip| HostName.call(ip) }).to_h.compact
         end
 
         # @return [void]
